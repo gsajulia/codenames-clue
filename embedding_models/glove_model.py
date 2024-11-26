@@ -1,4 +1,10 @@
 import numpy as np
+import nltk
+from nltk.stem import WordNetLemmatizer
+
+# Download necessary NLTK resources
+#nltk.download('wordnet')
+#nltk.download('omw-1.4')
 
 class GloveModel:
     def __init__(self, glove_path):
@@ -6,6 +12,7 @@ class GloveModel:
         Initializes the GloVe model by loading embeddings.
         """
         self.embeddings = self._load_glove_embeddings(glove_path)
+        self.lemmatizer = WordNetLemmatizer()
         print("GloVe model is ready.")
 
     def _load_glove_embeddings(self, file_path):
@@ -29,7 +36,7 @@ class GloveModel:
         """
         return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
     
-    def similarity_from_distance(vec1, vec2):
+    def similarity_from_distance(self, vec1, vec2):
         """
         Computes the similarity between two vectors based on Euclidean distance.
         """
@@ -37,16 +44,28 @@ class GloveModel:
         distance = np.linalg.norm(vec1 - vec2)
         return 1 - (distance ** 2 / 2)
 
+    def lemmatize_word(self, word):
+        """
+        Lemmatizes a word to its base form (removes derivations).
+        """
+        return self.lemmatizer.lemmatize(word.lower())
+
     def find_hint(self, target_words, avoid_words):
         """
         Finds the best hint based on the provided target and avoid word arrays.
         """
+        # Lemmatize the words to avoid comparing different word forms
+        target_words = [self.lemmatize_word(word) for word in target_words]
+        avoid_words = [self.lemmatize_word(word) for word in avoid_words]
+
+        # Filter out words that don't exist in embeddings
         target_vectors = [self.embeddings[word] for word in target_words if word in self.embeddings]
         avoid_vectors = [self.embeddings[word] for word in avoid_words if word in self.embeddings]
 
         best_hint = None
         best_score = float('-inf')
 
+        # Iterate through the GloVe embeddings to find the best hint
         for candidate, candidate_vec in self.embeddings.items():
             if candidate not in target_words:  # Exclude target words as hints
                 target_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in target_vectors) / len(target_vectors)

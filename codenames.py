@@ -4,8 +4,8 @@ from embedding_models.bert_model import BertModel
 
 if __name__ == "__main__":
     # All target 'blind', 'minotaur', 'genie', 'new', 'telescope', 'sugar', 'flower', 'puppet', 'cat', 'dwarf', 'good'
-    default_target = ['minotaur', 'dwarf']
-    default_avoid = ['light', 'honey', 'milk', 'bunk', 'cycle', 'orange', 'mermaid', 'sink', 'mine', 'river','cloud', 'diamond'] # assassin: diamond
+    default_target = ['dolphin', 'wale']
+    default_avoid = ['bath', 'break', 'thorn', 'caesar', 'date', 'gymnast', 'log', 'sea', 'sun'] # assassin: diamond
 
     print("Choose the model to use:")
     print("1. GloVe")

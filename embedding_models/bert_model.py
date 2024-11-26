@@ -1,7 +1,12 @@
 from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
 from nltk.corpus import stopwords
+import nltk
+from nltk.stem import PorterStemmer
 import torch
+
+nltk.download('stopwords')
+nltk.download('wordnet')
 
 class BertModel:
     def __init__(self, model_name="bert-base-uncased"):
@@ -13,8 +18,40 @@ class BertModel:
         print("Loading BERT model...")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
+        self.stemmer = PorterStemmer()
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+
         print("BERT model loaded!")
 
+    # ... (Outras funções continuam iguais)
+
+    def is_valid_hint(self, word, target_words):
+        """
+        Determines if a word is valid for use as a hint.
+        - Excludes stopwords and words with specific unwanted characteristics.
+        """
+        stop_words = set(stopwords.words('english'))  # Load a set of common stopwords
+        if word in stop_words:
+            return False
+        if len(word) < 3:  # Exclude words that are too short
+            return False
+        
+        # Check if the word is a simple derivative (plural/singular)
+        if word in target_words:
+            return False
+        for target_word in target_words:
+            if self.stemmer.stem(word) == self.stemmer.stem(target_word):
+                return False
+        
+        # Check other technical or unwanted substrings in words
+        technical_words = {} # TODO
+        if any(substring in word for substring in technical_words):
+            return False
+
+        return True
+    
     def get_word_embedding(self, word):
         """
         Computes the embedding vector for a given word using BERT.
@@ -46,23 +83,7 @@ class BertModel:
         # Compute Euclidean distance
         distance = torch.norm(vec1 - vec2)
         return 1 - (distance ** 2 / 2)
-
-    def is_valid_hint(self, word):
-        """
-        Determines if a word is valid for use as a hint.
-        - Excludes stopwords and words with specific unwanted characteristics.
-        """
-        stop_words = set(stopwords.words('english'))  # Load a set of common stopwords
-        if word in stop_words:
-            return False
-        if len(word) < 3:  # Exclude words that are too short
-            return False
-        # Exclude technical or unwanted substrings in words
-        technical_words = {} # TODO
-        if any(substring in word for substring in technical_words):
-            return False
-        return True
-
+    
     def find_hint(self, target_words, avoid_words):
         """
         Finds the best hint word that is most similar to the target words 
@@ -89,26 +110,20 @@ class BertModel:
             candidate_vec = self.get_word_embedding(word)
 
             # Exclude target words from being used as hints
-            if word not in target_words and self.is_valid_hint(word):
+            if word not in target_words and self.is_valid_hint(word, target_words):
                 # Compute similarity to target and avoid word sets
                 target_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in target_vectors) / len(target_vectors)
                 avoid_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in avoid_vectors) / len(avoid_vectors)
 
                 # Calculate the final score
-                #score = target_sim - avoid_sim
-                score = target_sim
+                score = target_sim - avoid_sim
 
-                print(f"Candidate: {word}, Target Similarity: {target_sim}, Avoid Similarity: {avoid_sim}, Score: {score}")
-
-                # Update the best hint if the score is higher
-                if score > best_score:
-                    best_hint = word
-                    best_score = score
+                #print(f"Candidate: {word}, Target Similarity: {target_sim}, Avoid Similarity: {avoid_sim}, Score: {score}")
 
                 # Update the best hint if the score is higher
                 if score > best_score:
                     best_hint = word
                     best_score = score
 
-        print(f"Candidate: {best_hint}, Target Similarity: {target_sim}, Avoid Similarity: {avoid_sim}, Score: {best_score}")
+        print(f"Best hint: {best_hint}, Score: {best_score}")
         return best_hint
