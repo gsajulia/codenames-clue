@@ -46,11 +46,11 @@ source codenames_env/bin/activate
 pip3.12 install -r requirements.txt
 ```
 
-(Required for improving performance of Apple Silicon (M1, M2))
-```bash
-pip3.12 install torch torchvision torchaudio
-```
-
 ```bash
 python3.12 mac/codenames_mac.py
+```
+
+Opitional: Required for improving performance of Apple Silicon (M1, M2)
+```bash
+pip3.12 install torch torchvision torchaudio
 ```
