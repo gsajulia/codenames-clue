@@ -1,14 +1,9 @@
 from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
-from nltk.corpus import stopwords
-import nltk
 from nltk.stem import PorterStemmer
 import torch
 
-nltk.download('stopwords')
-nltk.download('wordnet')
-
-class BertModel:
+class BertModelMac:
     def __init__(self, model_name="bert-base-uncased"):
         """
         Initializes the BERT model and tokenizer.
@@ -16,12 +11,10 @@ class BertModel:
             model_name (str): Name of the pretrained BERT model to load.
         """
         print("Loading BERT model...")
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to(self.device)
         self.stemmer = PorterStemmer()
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
 
         print("BERT model loaded!")
 
@@ -31,12 +24,6 @@ class BertModel:
         Determines if a word is valid for use as a hint.
         - Excludes stopwords and words with specific unwanted characteristics.
         """
-        stop_words = set(stopwords.words('english'))  # Load a set of common stopwords
-        if word in stop_words:
-            return False
-        if len(word) < 3:  # Exclude words that are too short
-            return False
-        
         # Check if the word is a simple derivative (plural/singular)
         if word in target_words:
             return False
@@ -60,6 +47,7 @@ class BertModel:
             torch.Tensor: The embedding vector.
         """
         inputs = self.tokenizer(word, return_tensors="pt")
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
         with torch.no_grad():
             outputs = self.model(**inputs)
         # Average pooling to get a single vector per word

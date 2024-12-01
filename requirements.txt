@@ -1,6 +1,5 @@
 numpy
 gensim
-keyboard
 transformers
 torch
 nltk

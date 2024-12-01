@@ -1,24 +1,15 @@
-from embedding_models.glove_model import GloveModel
-from embedding_models.bert_model import BertModel
+from bert_model_mac import BertModelMac
 
 if __name__ == "__main__":
     # All target 'blind', 'minotaur', 'genie', 'new', 'telescope', 'sugar', 'flower', 'puppet', 'cat', 'dwarf', 'good'
     default_target = ['dolphin', 'wale']
     default_avoid = ['bath', 'break', 'thorn', 'caesar', 'date', 'gymnast', 'log', 'sea', 'sun'] # assassin: diamond
 
-    print("Choose the model to use:")
-    print("1. GloVe")
-    print("2. BERT")
-    choice = input("Enter your choice (1 or 2): ")
+    model = BertModelMac()
 
-    if choice == "1":
-        glove_path = "embeddings/glove.6b/glove.6B.300d.txt"
-        model = GloveModel(glove_path)
-    elif choice == "2":
-        model = BertModel()
-    else:
-        print("Invalid choice!")
-        exit()
+    print("\nWelcome to the Codenames hint generator!")
+    print("Enter your target and avoid words to get a hint.")
+    print("Type 'exit' at any time to quit.\n")
 
     target_words = default_target
     avoid_words = default_avoid
