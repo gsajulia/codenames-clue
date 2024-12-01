@@ -46,7 +46,8 @@ source codenames_env/bin/activate
 pip3.12 install -r requirements.txt
 ```
 
-```bash (for M1 chips)
+(Required for improving performance of Apple Silicon (M1, M2))
+```bash
 pip3.12 install torch torchvision torchaudio
 ```
 
