@@ -17,11 +17,9 @@ class BertModel:
         """
         print("Loading BERT model...")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.stemmer = PorterStemmer()
-
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
+        self.model = AutoModel.from_pretrained(model_name).to(self.device)
+        self.stemmer = PorterStemmer()
 
         print("BERT model loaded!")
 
@@ -31,27 +29,24 @@ class BertModel:
         Determines if a word is valid for use as a hint.
         - Excludes stopwords and words with specific unwanted characteristics.
         """
-        stop_words = set(stopwords.words('english'))  # Load a set of common stopwords
+        stop_words = set(stopwords.words('english'))
+        if word.startswith("##"):
+            return False
         if word in stop_words:
             return False
-        if len(word) < 3:  # Exclude words that are too short
+        if len(word) < 3:
             return False
-        
-        # Check if the word is a simple derivative (plural/singular)
         if word in target_words:
             return False
         for target_word in target_words:
             if self.stemmer.stem(word) == self.stemmer.stem(target_word):
                 return False
-        
-        # Check other technical or unwanted substrings in words
-        technical_words = {} # TODO
+        technical_words = {}
         if any(substring in word for substring in technical_words):
             return False
-
-        return True
+        return word.isalpha()
     
-    def get_word_embedding(self, word):
+    def get_word_embedding(self, words):
         """
         Computes the embedding vector for a given word using BERT.
         Args:
@@ -59,11 +54,11 @@ class BertModel:
         Returns:
             torch.Tensor: The embedding vector.
         """
-        inputs = self.tokenizer(word, return_tensors="pt")
+        inputs = self.tokenizer(words, return_tensors="pt", padding=True, truncation=True)
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
         with torch.no_grad():
             outputs = self.model(**inputs)
-        # Average pooling to get a single vector per word
-        return outputs.last_hidden_state.mean(dim=1).squeeze()
+        return outputs.last_hidden_state.mean(dim=1)
 
     def cosine_similarity(self, vec1, vec2):
         """
@@ -93,36 +88,28 @@ class BertModel:
         Returns:
             str: The best hint word.
         """
-        # Get embeddings for target and avoid words
-        target_vectors = [self.get_word_embedding(word) for word in tqdm(target_words, desc="Processing target words")]
-        avoid_vectors = [self.get_word_embedding(word) for word in tqdm(avoid_words, desc="Processing avoid words")]
+        print("Computing embeddings for target and avoid words...")
+        target_embeddings = self.get_word_embedding(target_words)
+        avoid_embeddings = self.get_word_embedding(avoid_words)
 
-        best_hint = None
-        best_score = float('-inf')
+        print("Precomputing embeddings for candidate words...")
+        candidate_words = [
+            word for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert") 
+            if self.is_valid_hint(word, target_words)
+        ]
+        candidate_embeddings = []
+        for batch_start in tqdm(range(0, len(candidate_words), 16), desc="Processing candidate words"):
+            batch = candidate_words[batch_start:batch_start + 16]
+            candidate_embeddings.append(self.get_word_embedding(batch))
+        candidate_embeddings = torch.cat(candidate_embeddings, dim=0)
 
-        # Iterate over BERT vocabulary
-        for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert"):
-            # Skip words that are split into subwords or not valid hints
-            if len(self.tokenizer.tokenize(word)) > 1:
-                continue
+        target_similarities = torch.mm(candidate_embeddings, target_embeddings.T).mean(dim=1)
+        avoid_similarities = torch.mm(candidate_embeddings, avoid_embeddings.T).mean(dim=1)
+        scores = target_similarities - avoid_similarities
 
-            candidate_vec = self.get_word_embedding(word)
-
-            # Exclude target words from being used as hints
-            if word not in target_words and self.is_valid_hint(word, target_words):
-                # Compute similarity to target and avoid word sets
-                target_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in target_vectors) / len(target_vectors)
-                avoid_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in avoid_vectors) / len(avoid_vectors)
-
-                # Calculate the final score
-                score = target_sim - avoid_sim
-
-                #print(f"Candidate: {word}, Target Similarity: {target_sim}, Avoid Similarity: {avoid_sim}, Score: {score}")
-
-                # Update the best hint if the score is higher
-                if score > best_score:
-                    best_hint = word
-                    best_score = score
+        best_index = scores.argmax().item()
+        best_hint = candidate_words[best_index]
+        best_score = scores[best_index].item()
 
         print(f"Best hint: {best_hint}, Score: {best_score}")
         return best_hint

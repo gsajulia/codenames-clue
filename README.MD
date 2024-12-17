@@ -3,7 +3,8 @@
 ## Embeddings
 
 ### 1. GloVe - Wikipedia
-### 2. BERT 
+
+### 2. BERT
 
 ## TODO
 
@@ -22,9 +23,11 @@ python -m venv codenames_env
 ### (Optional) Open the virtual environment
 
 ## Windows
+
 ```bash
 codenames_env\Scripts\activate
 ```
+
 ### Setting Up and Running the Project
 
 ```bash
@@ -36,6 +39,7 @@ python codenames.py
 ```
 
 ## Mac (Python 3.12 required)
+
 ```bash
 source codenames_env/bin/activate
 ```
@@ -51,6 +55,7 @@ python3.12 mac/codenames_mac.py
 ```
 
 Opitional: Required for improving performance of Apple Silicon (M1, M2)
+
 ```bash
-pip3.12 install torch torchvision torchaudio
+pip3.12 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
