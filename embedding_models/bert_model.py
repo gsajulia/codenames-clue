@@ -38,6 +38,10 @@ class BertModel:
             return False
         if word in target_words:
             return False
+        # Can be used to avoid plural words
+        # singular = self.stemmer.stem(word)
+        # if singular != word:
+        #     return False
         for target_word in target_words:
             if self.stemmer.stem(word) == self.stemmer.stem(target_word):
                 return False

@@ -52,28 +52,50 @@ class GloveModel:
 
     def find_hint(self, target_words, avoid_words):
         """
-        Finds the best hint based on the provided target and avoid word arrays.
+        Finds the best hint word using batches.
+        Args:
+            target_words (list of str): Words to prioritize.
+            avoid_words (list of str): Words to avoid.
+        Returns:
+            str: The best hint word.
         """
-        # Lemmatize the words to avoid comparing different word forms
-        target_words = [self.lemmatize_word(word) for word in target_words]
-        avoid_words = [self.lemmatize_word(word) for word in avoid_words]
+        target_words = {self.lemmatize_word(word) for word in target_words}
+        avoid_words = {self.lemmatize_word(word) for word in avoid_words}
+        excluded_words = target_words.union(avoid_words)
 
-        # Filter out words that don't exist in embeddings
-        target_vectors = [self.embeddings[word] for word in target_words if word in self.embeddings]
-        avoid_vectors = [self.embeddings[word] for word in avoid_words if word in self.embeddings]
+        all_words = [
+            word for word in self.embeddings.keys()
+            if word not in excluded_words and self.lemmatize_word(word) not in excluded_words
+        ]
+        all_vectors = np.array([self.embeddings[word] for word in all_words])
 
         best_hint = None
         best_score = float('-inf')
 
-        # Iterate through the GloVe embeddings to find the best hint
-        for candidate, candidate_vec in self.embeddings.items():
-            if candidate not in target_words:  # Exclude target words as hints
-                target_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in target_vectors) / len(target_vectors)
-                avoid_sim = sum(self.cosine_similarity(candidate_vec, vec) for vec in avoid_vectors) / len(avoid_vectors)
-                
-                score = target_sim - avoid_sim
-                if score > best_score:
-                    best_hint = candidate
-                    best_score = score
+        target_vectors = np.array([self.embeddings[word] for word in target_words if word in self.embeddings])
+        avoid_vectors = np.array([self.embeddings[word] for word in avoid_words if word in self.embeddings])
 
+        if target_vectors.size == 0 or avoid_vectors.size == 0:
+            raise ValueError("Target or avoid vectors are empty. Check the input words.")
+
+        batch_size = 1000
+        # Process candidates in batches
+        for batch_start in range(0, len(all_words), batch_size):
+            batch_end = batch_start + batch_size
+            batch_words = all_words[batch_start:batch_end]
+            batch_vectors = all_vectors[batch_start:batch_end]
+
+            # Calculate similarities
+            target_similarities = np.dot(batch_vectors, target_vectors.T).mean(axis=1)
+            avoid_similarities = np.dot(batch_vectors, avoid_vectors.T).mean(axis=1)
+            scores = target_similarities - avoid_similarities
+
+            # Find the best hint in the batch
+            batch_best_idx = scores.argmax()
+            batch_best_score = scores[batch_best_idx]
+
+            if batch_best_score > best_score:
+                best_hint = batch_words[batch_best_idx]
+                best_score = batch_best_score
+        
         return best_hint

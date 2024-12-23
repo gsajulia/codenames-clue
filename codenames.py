@@ -3,9 +3,10 @@ from embedding_models.bert_model import BertModel
 
 if __name__ == "__main__":
     # All target 'blind', 'minotaur', 'genie', 'new', 'telescope', 'sugar', 'flower', 'puppet', 'cat', 'dwarf', 'good'
-    default_target = ['dolphin', 'wale']
-    default_avoid = ['bath', 'break', 'thorn', 'caesar', 'date', 'gymnast', 'log', 'sea', 'sun'] # assassin: diamond
-
+    #default_target = ['dolphin', 'wale']
+    #default_avoid = ['bath', 'break', 'thorn', 'caesar', 'date', 'gymnast', 'log', 'sea', 'sun'] # assassin: diamond
+    default_target = ['children', 'classroom']
+    default_avoid = ['bath', 'break', 'thorn', 'caesar', 'date', 'gymnast', 'mar', 'log', 'sea', 'sun']
     print("Choose the model to use:")
     print("1. GloVe")
     print("2. BERT")
