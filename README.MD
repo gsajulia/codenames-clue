@@ -6,9 +6,12 @@
 
 ### 2. BERT
 
+## Board words
+
+- You can use or modify possible words in example_words.txt
+
 ## TODO
 
-- Test with multiple models
 - Improve embeddings (embeddings can guess really wrong and fact of generic and difficult clue)
 - Include logic for assassin and neutral cards
 

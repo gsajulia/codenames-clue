@@ -4,6 +4,8 @@ from nltk.corpus import stopwords
 import nltk
 from nltk.stem import PorterStemmer
 import torch
+import torch.nn.functional as F
+from nltk.stem import WordNetLemmatizer
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -20,9 +22,15 @@ class BertModel:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = AutoModel.from_pretrained(model_name).to(self.device)
         self.stemmer = PorterStemmer()
+        self.lemmatizer = WordNetLemmatizer()
 
         print("BERT model loaded!")
 
+    def lemmatize_word(self, word):
+        """
+        Lemmatizes a word to its base form (removes derivations).
+        """
+        return self.lemmatizer.lemmatize(word.lower())
 
     def is_valid_hint(self, word, target_words):
         """
@@ -42,9 +50,13 @@ class BertModel:
         # singular = self.stemmer.stem(word)
         # if singular != word:
         #     return False
+        
+        # Ensure the word is not a derivation of any target word
+        lemmatized_word = self.lemmatize_word(word)
         for target_word in target_words:
-            if self.stemmer.stem(word) == self.stemmer.stem(target_word):
+            if lemmatized_word == self.lemmatize_word(target_word):
                 return False
+
         technical_words = {}
         if any(substring in word for substring in technical_words):
             return False
@@ -63,7 +75,7 @@ class BertModel:
         with torch.no_grad():
             outputs = self.model(**inputs)
         return outputs.last_hidden_state.mean(dim=1)
-
+    
     def cosine_similarity(self, vec1, vec2):
         """
         Computes cosine similarity between two vectors.
@@ -72,15 +84,9 @@ class BertModel:
         Returns:
             float: Cosine similarity value.
         """
-        return torch.dot(vec1, vec2) / (torch.norm(vec1) * torch.norm(vec2))
+        return F.cosine_similarity(vec1, vec2, dim=-1)
     
-    def similarity_from_distance(vec1, vec2):
-        """
-        Computes the similarity between two vectors based on Euclidean distance.
-        """
-        # Compute Euclidean distance
-        distance = torch.norm(vec1 - vec2)
-        return 1 - (distance ** 2 / 2)
+    
     
     def find_hint(self, target_words, avoid_words):
         """
@@ -94,8 +100,10 @@ class BertModel:
         """
         print("Computing embeddings for target and avoid words...")
         target_embeddings = self.get_word_embedding(target_words)
-        avoid_embeddings = self.get_word_embedding(avoid_words)
-
+        target_embeddings = target_embeddings.mean(dim=0, keepdim=True)
+        # avoid_embeddings = self.get_word_embedding(avoid_words)
+        # target_embeddings = avoid_embeddings.mean(dim=0, keepdim=True)
+        
         print("Precomputing embeddings for candidate words...")
         candidate_words = [
             word for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert") 
@@ -106,10 +114,10 @@ class BertModel:
             batch = candidate_words[batch_start:batch_start + 16]
             candidate_embeddings.append(self.get_word_embedding(batch))
         candidate_embeddings = torch.cat(candidate_embeddings, dim=0)
-
-        target_similarities = torch.mm(candidate_embeddings, target_embeddings.T).mean(dim=1)
-        avoid_similarities = torch.mm(candidate_embeddings, avoid_embeddings.T).mean(dim=1)
-        scores = target_similarities - avoid_similarities
+        
+        target_similarities = self.cosine_similarity(candidate_embeddings, target_embeddings)
+        #avoid_similarities = self.cosine_similarity(candidate_embeddings, avoid_embeddings)
+        scores = target_similarities # - avoid_similarities
 
         best_index = scores.argmax().item()
         best_hint = candidate_words[best_index]

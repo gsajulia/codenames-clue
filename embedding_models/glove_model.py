@@ -1,17 +1,20 @@
 import numpy as np
-import nltk
 from nltk.stem import WordNetLemmatizer
+
+import os
+
+embedding_file_path = os.path.join(os.path.dirname(__file__), 'embeddings', 'glove.6b', 'glove.6B.300d.txt')
 
 # Download necessary NLTK resources
 #nltk.download('wordnet')
 #nltk.download('omw-1.4')
 
 class GloveModel:
-    def __init__(self, glove_path):
+    def __init__(self):
         """
         Initializes the GloVe model by loading embeddings.
         """
-        self.embeddings = self._load_glove_embeddings(glove_path)
+        self.embeddings = self._load_glove_embeddings(embedding_file_path)
         self.lemmatizer = WordNetLemmatizer()
         print("GloVe model is ready.")
 
@@ -73,9 +76,9 @@ class GloveModel:
         best_score = float('-inf')
 
         target_vectors = np.array([self.embeddings[word] for word in target_words if word in self.embeddings])
-        avoid_vectors = np.array([self.embeddings[word] for word in avoid_words if word in self.embeddings])
+        # avoid_vectors = np.array([self.embeddings[word] for word in avoid_words if word in self.embeddings])
 
-        if target_vectors.size == 0 or avoid_vectors.size == 0:
+        if target_vectors.size == 0:
             raise ValueError("Target or avoid vectors are empty. Check the input words.")
 
         batch_size = 1000
@@ -87,8 +90,8 @@ class GloveModel:
 
             # Calculate similarities
             target_similarities = np.dot(batch_vectors, target_vectors.T).mean(axis=1)
-            avoid_similarities = np.dot(batch_vectors, avoid_vectors.T).mean(axis=1)
-            scores = target_similarities - avoid_similarities
+            #avoid_similarities = np.dot(batch_vectors, avoid_vectors.T).mean(axis=1)
+            scores = target_similarities # - avoid_similarities
 
             # Find the best hint in the batch
             batch_best_idx = scores.argmax()
