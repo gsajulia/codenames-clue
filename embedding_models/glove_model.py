@@ -101,4 +101,4 @@ class GloveModel:
                 best_hint = batch_words[batch_best_idx]
                 best_score = batch_best_score
         
-        return best_hint
+        return {"best_hint": best_hint, "best_score":best_score}

@@ -124,4 +124,4 @@ class BertModel:
         best_score = scores[best_index].item()
 
         print(f"Best hint: {best_hint}, Score: {best_score}")
-        return best_hint
+        return {"best_hint": best_hint, "best_score":best_score}

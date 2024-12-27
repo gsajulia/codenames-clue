@@ -3,3 +3,5 @@ gensim
 transformers
 torch
 nltk
+pandas
+openpyxl

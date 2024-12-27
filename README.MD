@@ -12,6 +12,7 @@
 
 ## TODO
 
+- Group of clues, today the code work very good for one but we must adjust to work for multiple
 - Improve embeddings (embeddings can guess really wrong and fact of generic and difficult clue)
 - Include logic for assassin and neutral cards
 
