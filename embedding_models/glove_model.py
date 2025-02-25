@@ -1,3 +1,5 @@
+from utils.functions import np_cosine_similarity
+
 import numpy as np
 from nltk.stem import WordNetLemmatizer
 
@@ -32,20 +34,6 @@ class GloveModel:
                 embeddings[word] = vector
         print("Embeddings loaded!")
         return embeddings
-
-    def cosine_similarity(self, vec1, vec2):
-        """
-        Computes the cosine similarity between two vectors.
-        """
-        return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
-    
-    def similarity_from_distance(self, vec1, vec2):
-        """
-        Computes the similarity between two vectors based on Euclidean distance.
-        """
-        # Compute Euclidean distance
-        distance = np.linalg.norm(vec1 - vec2)
-        return 1 - (distance ** 2 / 2)
 
     def lemmatize_word(self, word):
         """
@@ -89,7 +77,7 @@ class GloveModel:
             batch_vectors = all_vectors[batch_start:batch_end]
 
             # Calculate similarities
-            target_similarities = np.dot(batch_vectors, target_vectors.T).mean(axis=1)
+            target_similarities = np_cosine_similarity(batch_vectors, target_vectors)
             #avoid_similarities = np.dot(batch_vectors, avoid_vectors.T).mean(axis=1)
             scores = target_similarities # - avoid_similarities
 

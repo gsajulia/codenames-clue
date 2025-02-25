@@ -6,6 +6,7 @@ from nltk.stem import PorterStemmer
 import torch
 import torch.nn.functional as F
 from nltk.stem import WordNetLemmatizer
+from utils.functions import touch_cosine_similarity, touch_euclidean_distance
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -76,18 +77,6 @@ class BertModel:
             outputs = self.model(**inputs)
         return outputs.last_hidden_state.mean(dim=1)
     
-    def cosine_similarity(self, vec1, vec2):
-        """
-        Computes cosine similarity between two vectors.
-        Args:
-            vec1, vec2 (torch.Tensor): Vectors to compare.
-        Returns:
-            float: Cosine similarity value.
-        """
-        return F.cosine_similarity(vec1, vec2, dim=-1)
-    
-    
-    
     def find_hint(self, target_words, avoid_words):
         """
         Finds the best hint word that is most similar to the target words 
@@ -114,8 +103,12 @@ class BertModel:
             batch = candidate_words[batch_start:batch_start + 16]
             candidate_embeddings.append(self.get_word_embedding(batch))
         candidate_embeddings = torch.cat(candidate_embeddings, dim=0)
-        
-        target_similarities = self.cosine_similarity(candidate_embeddings, target_embeddings)
+    
+
+        target_similarities = touch_cosine_similarity(candidate_embeddings, target_embeddings)
+        # target_similarities = [self.euclidean_distance(candidate_embeddings, target_embeddings) for candidate_embeddings in candidate_embeddings]
+        # target_distances_tensor = torch.tensor(target_similarities)
+        # best_index = scores.argmin().item()
         #avoid_similarities = self.cosine_similarity(candidate_embeddings, avoid_embeddings)
         scores = target_similarities # - avoid_similarities
 
