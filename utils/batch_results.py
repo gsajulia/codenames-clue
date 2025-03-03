@@ -3,6 +3,7 @@ from embedding_models.bert_model import BertModel
 from embedding_models.glove_model import GloveModel
 from utils.generate_board import GenerateBoard
 import pandas as pd
+import uuid
 
 class BatchResults:
     def __init__(self):
@@ -40,5 +41,5 @@ class BatchResults:
 
       df = pd.DataFrame(self.results)
 
-      file_name = "results/2.0_results_simple.csv"
+      file_name = "results/{uuid}_results_simple.csv".format(uuid=uuid.uuid4())
       df.to_csv(file_name, index=False)

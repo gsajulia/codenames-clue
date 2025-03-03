@@ -5,3 +5,4 @@ torch
 nltk
 pandas
 openpyxl
+scikit-learn

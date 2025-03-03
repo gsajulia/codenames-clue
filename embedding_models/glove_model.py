@@ -41,6 +41,21 @@ class GloveModel:
         """
         return self.lemmatizer.lemmatize(word.lower())
 
+    def get_word_embedding(self, target_words): 
+        target_embeddings = []
+        valid_words = []
+        
+        for word in target_words:
+            if word in self.embeddings:
+                target_embeddings.append(self.embeddings[word])
+                valid_words.append(word)  # Only words with embedding are considered
+                
+        if not target_embeddings:
+            raise ValueError("No word with embedding")
+
+        return np.array(target_embeddings)
+
+
     def find_hint(self, target_words, avoid_words):
         """
         Finds the best hint word using batches.
