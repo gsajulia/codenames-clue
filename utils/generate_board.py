@@ -37,7 +37,7 @@ class GenerateBoard:
         neutral_size = 7
         assassin_size = 1
         avoid_team_size = 8
-        target_team_size = 1
+        target_team_size = 8
 
         board_size = [neutral_size, assassin_size, avoid_team_size, target_team_size]
         board_result = []
