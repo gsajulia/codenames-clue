@@ -12,9 +12,12 @@
 
 ## TODO
 
-- Group of clues, today the code work very good for one but we must adjust to work for multiple
 - Improve embeddings (embeddings can guess really wrong and fact of generic and difficult clue)
 - Include logic for assassin and neutral cards
+
+## Requirements
+
+- If you want to choose between GPU and CPU, you need to install the specific torch version available on torch site
 
 ## Commands
 

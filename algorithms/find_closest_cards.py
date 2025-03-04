@@ -31,7 +31,7 @@ def get_clue_candidates(target_words, target_embeddings, n_neighbors=3, threshol
     blue_neighbors = {}
     for i, word in enumerate(target_words):
         # Exclude the word itself
-        neighbor_idxs = [j for j in indices[i] if j != i]
+        neighbor_idxs = [j for j in indices[i] if j != i and j < len(target_words)]
         neighbor_words = [target_words[j] for j in neighbor_idxs]
         blue_neighbors[word] = neighbor_words
         
@@ -44,12 +44,22 @@ def get_clue_candidates(target_words, target_embeddings, n_neighbors=3, threshol
         if word in blue_neighbors:
             clue_candidates_overall.update(blue_neighbors[word])
             
-            word_embedding = target_embeddings[target_words.index(word)]
+            try:
+                word_idx = target_words.index(word)
+                word_embedding = target_embeddings[word_idx]
+            except ValueError:
+                print(f"Error: {word} not found in target_words")
+                continue
+
             
             for neighbor in blue_neighbors[word]:
-                neighbor_embedding = target_embeddings[target_words.index(neighbor)]
-                similarity = np_cosine_similarity([word_embedding], [neighbor_embedding])[0]
-                similarity_candidates[neighbor] = similarity
+                # KNN can generate embeddings that are not present in target so we need to check
+                if neighbor in target_words: 
+                    neighbor_embedding = target_embeddings[target_words.index(neighbor)]
+                    similarity = np_cosine_similarity([word_embedding], [neighbor_embedding])[0]
+                    similarity_candidates[neighbor] = similarity
+                else:
+                    print(f"Warning: Word {neighbor} not found in target_words")
             
     print('clue_candidates_overall', clue_candidates_overall)
     max_similarity = max(similarity_candidates.values()) * threshold_coef
