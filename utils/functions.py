@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-def touch_cosine_similarity(vec1, vec2):
+def torch_cosine_similarity(vec1, vec2):
     """
     Computes cosine similarity between two vectors.
     Args:
@@ -11,7 +11,7 @@ def touch_cosine_similarity(vec1, vec2):
     """
     return torch.nn.functional.cosine_similarity(vec1, vec2, dim=-1)
 
-def touch_euclidean_distance(vec1, vec2):
+def torch_euclidean_distance(vec1, vec2):
     """
     Calculates the Euclidean distance between two vectors.
     Args:
@@ -44,3 +44,11 @@ def np_cosine_similarity(candidates, targets):
     similarity_scores = np.dot(candidates, targets.T).mean(axis=1)
 
     return similarity_scores
+
+# TODO check this
+    # norm_candidates = np.linalg.norm(candidates, axis=1, keepdims=True)
+    # norm_targets= np.linalg.norm(targets, axis=1, keepdims=True)
+    
+    # dot_product = np.dot(norm_candidates, norm_targets.T)
+    
+    # return (dot_product / (norm_candidates * norm_targets)).mean(axis=1)

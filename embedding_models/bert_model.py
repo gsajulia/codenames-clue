@@ -6,7 +6,7 @@ from nltk.stem import PorterStemmer
 import torch
 import torch.nn.functional as F
 from nltk.stem import WordNetLemmatizer
-from utils.functions import touch_cosine_similarity, touch_euclidean_distance
+from utils.functions import torch_cosine_similarity, torch_euclidean_distance
 from sklearn.neighbors import NearestNeighbors
 
 nltk.download('stopwords')
@@ -84,103 +84,117 @@ class BertModel:
         weighted_embedding = torch.sum(target_embeddings * weights.unsqueeze(1), dim=0, keepdim=True)
         return weighted_embedding
 
-    # def find_hint(self, target_words, avoid_words, k=3): # TODO creating new function to find hint based in NN
-    #     """
-    #     Finds the best hint word that is most similar to each target word individually.
-        
-    #     Args:
-    #         target_words (list of str): Words to prioritize.
-    #         avoid_words (list of str): Words to avoid.
-    #         k (int): Number of nearest neighbors to consider for each target word.
-        
-    #     Returns:
-    #         dict: Mapping of each target word to its best hint and neighbors.
-    #     """
-        
-    #     print("Computing embeddings for target words...")
-    #     target_embeddings = self.get_word_embedding(target_words)
-    #     target_embeddings = self.weighted_target_embedding(target_embeddings)
-        
-    #     print("Precomputing embeddings for candidate words...")
-    #     candidate_words = [
-    #         word for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert") 
-    #         if self.is_valid_hint(word, target_words)
-    #     ]
-        
-    #     candidate_embeddings = []
-    #     for batch_start in tqdm(range(0, len(candidate_words), 16), desc="Processing candidate words"):
-    #         batch = candidate_words[batch_start:batch_start + 16]
-    #         embedding_batch = self.get_word_embedding(batch)
-    #         candidate_embeddings.append(embedding_batch)
-        
-    #     candidate_embeddings = torch.cat(candidate_embeddings, dim=0)  # (M, D) -> M candidates
-
-    #     results = {}
-
-    #     for i, target_embedding in enumerate(target_embeddings):  
-    #         target_embedding = target_embedding.unsqueeze(0)  # (1, D)
-            
-    #         # Compute cosine similarity between this specific target and candidates
-    #         similarities = F.cosine_similarity(candidate_embeddings, target_embedding)
-
-    #         # Get the top-k nearest neighbors
-    #         top_k_indices = torch.topk(similarities, k=k).indices
-    #         top_k_words = [candidate_words[i] for i in top_k_indices]
-            
-    #         # Best hint word is the first nearest neighbor
-    #         best_index = top_k_indices[0].item()
-    #         best_hint = candidate_words[best_index]
-    #         best_score = similarities[best_index].item()
-
-    #         results[target_words[i]] = {
-    #             "best_hint": best_hint,
-    #             "best_score": best_score,
-    #             "top_k_neighbors": top_k_words
-    #         }
-
-    #         print(f"Target: {target_words[i]}, Best Hint: {best_hint}, Score: {best_score}, Neighbors: {top_k_words}")
-
-    #     return results
-
-    
-    def find_hint(self, target_words, avoid_words):
-        """
-        Finds the best hint word that is most similar to the target words 
-        and least similar to the avoid words.
-        Args:
-            target_words (list of str): Words to prioritize.
-            avoid_words (list of str): Words to avoid.
-        Returns:
-            str: The best hint word.
-        """
-        print("Computing embeddings for target and avoid words...")
-        target_embeddings = self.get_word_embedding(target_words)
-        target_embeddings = self.weighted_target_embedding(target_embeddings)
-        # avoid_embeddings = self.get_word_embedding(avoid_words)
-        # target_embeddings = target_embeddings.mean(dim=0, keepdim=True) # TODO use this only for showing results
-        
+    def process_candidates(self, target_words):
         print("Precomputing embeddings for candidate words...")
         candidate_words = [
             word for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert") 
             if self.is_valid_hint(word, target_words)
         ]
+        
         candidate_embeddings = []
         for batch_start in tqdm(range(0, len(candidate_words), 16), desc="Processing candidate words"):
             batch = candidate_words[batch_start:batch_start + 16]
-            candidate_embeddings.append(self.get_word_embedding(batch))
+            embedding_batch = self.get_word_embedding(batch)
+            candidate_embeddings.append(embedding_batch)
+        
         candidate_embeddings = torch.cat(candidate_embeddings, dim=0)
-    
+        
+        return candidate_embeddings, candidate_words
+        
+    def select_best_hint_from_embeddings_and_neighbors(self, target_words, k=1000):
+        """
+        Select the best hint word that is most similar to each target word individually.
+        
+        Args:
+            target_words (list of str): Words to prioritize.
+            k (int): Number of nearest neighbors to consider for each target word.
+        
+        Returns:
+            dict: Mapping of each target word to its best hint and neighbors.
+        """
+        
+        print("Computing embeddings for target words...")
+        embeddings = []
+        for word in target_words:
+            target_embeddings = self.get_word_embedding([word])
+            target_embeddings = self.weighted_target_embedding(target_embeddings)
+            embeddings.append(target_embeddings)
+            # target_embeddings = target_embeddings.mean(dim=0, keepdim=True)
+        
+        candidate_embeddings, candidate_words = self.process_candidates(target_words)
 
-        target_similarities = touch_cosine_similarity(candidate_embeddings, target_embeddings)
+        results = {}
+        all_top_k_words = []
+        
+        for i, target_embedding in enumerate(embeddings):
+            # Ensure target_embedding is 2D  
+            if target_embedding.dim() == 1:
+                target_embedding = target_embedding.unsqueeze(0)
+            
+            # Compute cosine similarity between this specific target and candidates
+            similarities = torch_cosine_similarity(candidate_embeddings, target_embedding)
+
+            # Get the top-k nearest neighbors
+            top_k = torch.topk(similarities, k=k)
+            top_k_indices = top_k.indices
+            top_k_similarities = top_k.values
+            top_k_neighbors = [(candidate_words[idx.item()], sim.item()) for idx, sim in zip(top_k_indices, top_k_similarities)]
+            [all_top_k_words.append(candidate_words[i]) for i in top_k_indices]
+            
+    
+            # Best hint word is the first nearest neighbor
+            best_index = top_k_indices[0].item()
+            best_hint = candidate_words[best_index]
+            best_score = similarities[best_index].item()
+    
+            results[target_words[i]] = {
+                "best_hint": best_hint,
+                "best_score": best_score,
+                "top_k_neighbors": top_k_neighbors
+            }
+
+        print(f"Target: {target_words[i]}, Best Hint: {best_hint}, Score: {best_score}, Neighbors: {top_k_neighbors}")
+
+        # Now, to find the best pair (targets, neighbor) with the highest similarity:
+        best_hint = None
+        best_score = -1
+
+        all_target_embedding = self.get_word_embedding(target_words)
+        all_target_embedding = self.weighted_target_embedding(all_target_embedding)
+        for word in all_top_k_words:  # Iterate through the lists of top-k words
+            similarity = torch_cosine_similarity(self.get_word_embedding([word]), all_target_embedding)
+
+            if similarity > best_score:
+                best_score = similarity
+                best_hint = word
+
+        print(f"Best hint: {best_hint} with score {best_score}")
+
+        return {"best_hint": best_hint, "best_score":best_score}
+
+    
+    def select_best_hint_from_embeddings(self, target_words):
+        """
+        Select the best hint using similarity between the embeddings
+        Args:
+            target_words (list of str): Team Cards
+        Returns:
+            str: Hint
+        """
+        print("Computing embeddings for target and avoid words...")
+        target_embeddings = self.get_word_embedding(target_words)
+        target_embeddings = self.weighted_target_embedding(target_embeddings)
+        # target_embeddings = target_embeddings.mean(dim=0, keepdim=True) # TODO use this only for showing results
+        
+        candidate_embeddings, candidate_words = self.process_candidates(target_words)
+
+        target_similarities = torch_cosine_similarity(candidate_embeddings, target_embeddings)
         # target_similarities = [self.euclidean_distance(candidate_embeddings, target_embeddings) for candidate_embeddings in candidate_embeddings]
         # target_distances_tensor = torch.tensor(target_similarities)
         # best_index = scores.argmin().item()
         #avoid_similarities = self.cosine_similarity(candidate_embeddings, avoid_embeddings)
         
-        # top_k_indices = torch.topk(target_similarities, k=3).indices
-        # top_k_words = [candidate_words[i] for i in top_k_indices]
-        
-        scores = target_similarities # - avoid_similarities
+        scores = target_similarities
 
         best_index = scores.argmax().item()
         best_hint = candidate_words[best_index]
