@@ -41,14 +41,6 @@ def np_cosine_similarity(candidates, targets):
     targets = normalize(targets)
 
     # Compute cosine similarity (dot product of normalized vectors)
-    similarity_scores = np.dot(candidates, targets.T).mean(axis=1)
+    similarity_scores = np.dot(candidates, targets.T)
 
     return similarity_scores
-
-# TODO check this
-    # norm_candidates = np.linalg.norm(candidates, axis=1, keepdims=True)
-    # norm_targets= np.linalg.norm(targets, axis=1, keepdims=True)
-    
-    # dot_product = np.dot(norm_candidates, norm_targets.T)
-    
-    # return (dot_product / (norm_candidates * norm_targets)).mean(axis=1)

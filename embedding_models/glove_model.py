@@ -126,9 +126,9 @@ class GloveModel:
                 similarities = np_cosine_similarity(batch_vectors, target_vector.reshape(1, -1))
 
                 # Get the top-k neighbors
-                top_k = np.argsort(similarities)[::-1][:k]
+                top_k = np.argsort(similarities[:, i])[::-1][:k]
                 top_k_words = [batch_words[idx] for idx in top_k]
-                top_k_similarities = [similarities[idx] for idx in top_k]
+                top_k_similarities = [similarities[idx, i] for idx in top_k]
 
                 # Add to the list of all top-k words
                 [all_top_k_words.append(batch_words[idx]) for idx in top_k]
@@ -136,7 +136,7 @@ class GloveModel:
                 # Best hint is the first nearest neighbor
                 best_idx = top_k[0]
                 best_hint = batch_words[best_idx]
-                best_score = similarities[best_idx]
+                best_score = similarities[best_idx, i]
 
                 # Add the result for this target word
                 results[target_words[i]] = {
@@ -152,7 +152,8 @@ class GloveModel:
         for word in all_top_k_words:  # Iterate through the lists of top-k words
             similarity = np_cosine_similarity(self.embeddings[word].reshape(1, -1), np.array([self.embeddings[word] for word in target_words if word in self.embeddings]))
 
-            if similarity > best_score:
+            max_similarity = similarity.max()
+            if max_similarity > best_score:
                 best_score = similarity
                 best_hint = word
 
@@ -187,8 +188,8 @@ class GloveModel:
 
             # Calculate similarities
             target_similarities = np_cosine_similarity(batch_vectors, target_vectors)
-            #avoid_similarities = np.dot(batch_vectors, avoid_vectors.T).mean(axis=1)
-            scores = target_similarities # - avoid_similarities
+            # Get max similarity
+            scores = target_similarities.max(axis=1)
 
             # Find the best hint in the batch
             batch_best_idx = scores.argmax()
