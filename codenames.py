@@ -10,7 +10,7 @@ if __name__ == "__main__":
     try:
         board_cards = board.get_codenames_board()
         # default_target = ['planets', 'jupiter']
-        default_target = ['muggle']
+        default_target = ['burn']
         # default_target = ['muggle', 'foot', 'knock', 'sky', 'rice', 'sea', 'pearl', 'guitar'] # medium case / test with coef 0.9
         # default_target = ['shiny', 'foot', 'knock', 'sky', 'rice', 'sea', 'pearl', 'guitar'] # happy case
         
@@ -23,11 +23,11 @@ if __name__ == "__main__":
         # model_result = bert_model.select_best_hint_from_embeddings(target_words)
         print(f"Suggested Bert hint: {model_result["best_hint"]}  {model_result["best_score"]}\n")    
         
-        print('Selecting words for Glove')
-        glove_model = GloveModel()
-        # model_result = glove_model.select_best_hint_from_embeddings(target_words)
-        model_result = glove_model.select_best_hint_from_embeddings_and_neighbors(target_words)
-        print(f"Suggested Glove hint: {model_result["best_hint"]} {model_result["best_score"]}\n")   
+        # print('Selecting words for Glove')
+        # glove_model = GloveModel()
+        # # model_result = glove_model.select_best_hint_from_embeddings(target_words)
+        # model_result = glove_model.select_best_hint_from_embeddings_and_neighbors(target_words)
+        # print(f"Suggested Glove hint: {model_result["best_hint"]} {model_result["best_score"]}\n")   
         
         # Generate results
         # default_target = board_cards["target"]

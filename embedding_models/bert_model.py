@@ -1,16 +1,15 @@
 from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
 from nltk.corpus import stopwords
-import nltk
 from nltk.stem import PorterStemmer
 import torch
 import torch.nn.functional as F
 from nltk.stem import WordNetLemmatizer
 from utils.functions import torch_cosine_similarity, torch_euclidean_distance
-from sklearn.neighbors import NearestNeighbors
 
-nltk.download('stopwords')
-nltk.download('wordnet')
+# Download necessary NLTK resources
+# nltk.download('stopwords')
+# nltk.download('wordnet')
 
 class BertModel:
     def __init__(self, model_name="bert-base-uncased"):
@@ -32,7 +31,7 @@ class BertModel:
         """
         Lemmatizes a word to its base form (removes derivations).
         """
-        return self.lemmatizer.lemmatize(word.lower())
+        return self.lemmatizer.lemmatize(word.lower(), pos='v')
 
     def is_valid_hint(self, word, target_words):
         """
@@ -48,10 +47,6 @@ class BertModel:
             return False
         if word in target_words:
             return False
-        # Can be used to avoid plural words
-        # singular = self.stemmer.stem(word)
-        # if singular != word:
-        #     return False
         
         # Ensure the word is not a derivation of any target word
         lemmatized_word = self.lemmatize_word(word)
@@ -59,6 +54,7 @@ class BertModel:
             if lemmatized_word == self.lemmatize_word(target_word):
                 return False
 
+        # This could be added in special cases
         technical_words = {}
         if any(substring in word for substring in technical_words):
             return False
@@ -85,6 +81,8 @@ class BertModel:
         return weighted_embedding
 
     def process_candidates(self, target_words):
+        BATCH_SIZE = 32
+        
         print("Precomputing embeddings for candidate words...")
         candidate_words = [
             word for word in tqdm(self.tokenizer.vocab.keys(), desc="Checking words with Bert") 
@@ -92,8 +90,8 @@ class BertModel:
         ]
         
         candidate_embeddings = []
-        for batch_start in tqdm(range(0, len(candidate_words), 16), desc="Processing candidate words"):
-            batch = candidate_words[batch_start:batch_start + 16]
+        for batch_start in tqdm(range(0, len(candidate_words), BATCH_SIZE), desc="Processing candidate words"):
+            batch = candidate_words[batch_start:batch_start + BATCH_SIZE]
             embedding_batch = self.get_word_embedding(batch)
             candidate_embeddings.append(embedding_batch)
         

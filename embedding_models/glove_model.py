@@ -2,14 +2,16 @@ from utils.functions import np_cosine_similarity
 
 import numpy as np
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from tqdm import tqdm
 
 import os
 
 embedding_file_path = os.path.join(os.path.dirname(__file__), 'embeddings', 'glove.6b', 'glove.6B.300d.txt')
-
 # Download necessary NLTK resources
 #nltk.download('wordnet')
 #nltk.download('omw-1.4')
+# nltk.download('stopwords')
 
 class GloveModel:
     def __init__(self):
@@ -39,7 +41,8 @@ class GloveModel:
         """
         Lemmatizes a word to its base form (removes derivations).
         """
-        return self.lemmatizer.lemmatize(word.lower())
+        # pos v is added to be able to remove verbs like word is burn and it was returning burning
+        return self.lemmatizer.lemmatize(word.lower(), pos='v') 
 
     def get_word_embedding(self, target_words): 
         target_embeddings = []
@@ -55,47 +58,43 @@ class GloveModel:
 
         return np.array(target_embeddings)
     
-    def get_filtered_vectors(self, target_words, avoid_words):
+    def get_filtered_vectors(self, target_words):
         """
         Helper function to process target and avoid words, and retrieve their embeddings.
         
         Args:
             target_words (list of str): Words to prioritize.
-            avoid_words (list of str): Words to avoid.
         
         Returns:
             np.ndarray: Array of target vectors.
             np.ndarray: Array of candidate vectors.
-            list: List of all candidate words.
         """
         # Lemmatizing target and avoid words
         target_words = {self.lemmatize_word(word) for word in target_words}
-        avoid_words = {self.lemmatize_word(word) for word in avoid_words}
-        excluded_words = target_words.union(avoid_words)
+        stop_words = set(stopwords.words('english'))
 
         # Prepare the candidate words and vectors (avoiding excluded words)
         all_words = [
             word for word in self.embeddings.keys()
-            if word not in excluded_words and self.lemmatize_word(word) not in excluded_words
+            if word not in target_words and self.lemmatize_word(word) not in target_words and word not in stop_words
         ]
         all_vectors = np.array([self.embeddings[word] for word in all_words])
         
         return all_vectors, all_words
 
     
-    def select_best_hint_from_embeddings_and_neighbors(self, target_words, avoid_words, k=10):
+    def select_best_hint_from_embeddings_and_neighbors(self, target_words, k=10):
         """
         Finds the best hint word based on GloVe embeddings.
         
         Args:
             target_words (list of str): Words to prioritize.
-            avoid_words (list of str): Words to avoid.
             k (int): Number of nearest neighbors to consider for each target word.
         
         Returns:
             dict: Mapping of each target word to its best hint and neighbors.
         """
-        all_vectors, all_words = self.get_filtered_vectors(target_words, avoid_words)
+        all_vectors, all_words = self.get_filtered_vectors(target_words)
 
         # Store the results
         results = {}
@@ -161,16 +160,15 @@ class GloveModel:
         print('NN method')
         return {"best_hint": best_hint, "best_score": best_score.item()}
         
-    def select_best_hint_from_embeddings(self, target_words, avoid_words):
+    def select_best_hint_from_embeddings(self, target_words):
         """
         Finds the best hint word using batches.
         Args:
             target_words (list of str): Words to prioritize.
-            avoid_words (list of str): Words to avoid.
         Returns:
             str: The best hint word.
         """
-        all_vectors, all_words = self.get_filtered_vectors(target_words, avoid_words)
+        all_vectors, all_words = self.get_filtered_vectors(target_words)
 
         # Ensure all target words have embeddings
         target_vectors = np.array([self.embeddings[word] for word in target_words if word in self.embeddings])
