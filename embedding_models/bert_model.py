@@ -101,7 +101,7 @@ class BertModel:
         
         return candidate_embeddings, candidate_words
         
-    def select_best_hint_from_embeddings_and_neighbors(self, target_words, k=1000):
+    def select_best_hint_from_embeddings_and_neighbors(self, target_words, k=10):
         """
         Select the best hint word that is most similar to each target word individually.
         
@@ -168,9 +168,9 @@ class BertModel:
                 best_score = similarity
                 best_hint = word
 
-        print(f"Best hint: {best_hint} with score {best_score}")
+        print(f"Best hint: {best_hint} with score {best_score.item()}")
 
-        return {"best_hint": best_hint, "best_score":best_score}
+        return {"best_hint": best_hint, "best_score":best_score.item()}
 
     
     def select_best_hint_from_embeddings(self, target_words):
