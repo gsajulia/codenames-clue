@@ -31,7 +31,12 @@ class BertModel:
         """
         Lemmatizes a word to its base form (removes derivations).
         """
-        return self.lemmatizer.lemmatize(word.lower(), pos='v')
+        verb_lem = self.lemmatizer.lemmatize(word.lower(), pos='v')
+        
+        if verb_lem == word:
+           return self.lemmatizer.lemmatize(word.lower()) 
+        else:
+            return verb_lem
 
     def is_valid_hint(self, word, target_words):
         """

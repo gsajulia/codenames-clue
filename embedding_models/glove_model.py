@@ -42,8 +42,13 @@ class GloveModel:
         Lemmatizes a word to its base form (removes derivations).
         """
         # pos v is added to be able to remove verbs like word is burn and it was returning burning
-        return self.lemmatizer.lemmatize(word.lower(), pos='v') 
-
+        verb_lem = self.lemmatizer.lemmatize(word.lower(), pos='v')
+        
+        if verb_lem == word:
+           return self.lemmatizer.lemmatize(word.lower()) 
+        else:
+            return verb_lem
+        
     def get_word_embedding(self, target_words): 
         target_embeddings = []
         valid_words = []
@@ -99,7 +104,6 @@ class GloveModel:
         # Store the results
         results = {}
         all_top_k_words = []
-        
         target_vectors = []
         for word in target_words:
             if word in self.embeddings:
@@ -108,7 +112,6 @@ class GloveModel:
 
         target_vectors = np.array(target_vectors) 
             
-        target_vectors = np.array([self.embeddings[word] for word in target_words if word in self.embeddings])
         if target_vectors.size == 0:
             raise ValueError("Target or avoid vectors are empty. Check the input words.")
 
@@ -122,12 +125,12 @@ class GloveModel:
             # Compute cosine similarities between target words and candidate words in the batch
             for i, target_vector in enumerate(target_vectors):
                 # Compute cosine similarity for this target word with all candidates
-                similarities = np_cosine_similarity(batch_vectors, target_vector.reshape(1, -1))
+                similarities = np_cosine_similarity(batch_vectors, target_vector.reshape(1, -1)).max(axis=1)
 
                 # Get the top-k neighbors
-                top_k = np.argsort(similarities[:, i])[::-1][:k]
+                top_k = np.argsort(similarities)[::-1][:k]
                 top_k_words = [batch_words[idx] for idx in top_k]
-                top_k_similarities = [similarities[idx, i] for idx in top_k]
+                top_k_similarities = [similarities[idx] for idx in top_k]
 
                 # Add to the list of all top-k words
                 [all_top_k_words.append(batch_words[idx]) for idx in top_k]
@@ -135,7 +138,7 @@ class GloveModel:
                 # Best hint is the first nearest neighbor
                 best_idx = top_k[0]
                 best_hint = batch_words[best_idx]
-                best_score = similarities[best_idx, i]
+                best_score = similarities[best_idx]
 
                 # Add the result for this target word
                 results[target_words[i]] = {
@@ -148,17 +151,18 @@ class GloveModel:
         best_hint = None
         best_score = -1
 
+        all_target_embeddings = np.array([self.embeddings[word] for word in target_words if word in self.embeddings])
         for word in all_top_k_words:  # Iterate through the lists of top-k words
-            similarity = np_cosine_similarity(self.embeddings[word].reshape(1, -1), np.array([self.embeddings[word] for word in target_words if word in self.embeddings]))
+            similarity = np_cosine_similarity(self.embeddings[word].reshape(1, -1), all_target_embeddings)
 
             max_similarity = similarity.max()
             if max_similarity > best_score:
-                best_score = similarity
+                best_score = max_similarity
                 best_hint = word
 
-        print(f"Best hint: {best_hint} with score {best_score.item()}")
+        print(f"Best hint: {best_hint} with score {best_score}")
         print('NN method')
-        return {"best_hint": best_hint, "best_score": best_score.item()}
+        return {"best_hint": best_hint, "best_score": best_score}
         
     def select_best_hint_from_embeddings(self, target_words):
         """
@@ -188,7 +192,6 @@ class GloveModel:
             target_similarities = np_cosine_similarity(batch_vectors, target_vectors)
             # Get max similarity
             scores = target_similarities.max(axis=1)
-
             # Find the best hint in the batch
             batch_best_idx = scores.argmax()
             batch_best_score = scores[batch_best_idx]

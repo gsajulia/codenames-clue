@@ -10,7 +10,7 @@ if __name__ == "__main__":
     try:
         board_cards = board.get_codenames_board()
         # default_target = ['planets', 'jupiter']
-        default_target = ['burn']
+        default_target = ['muggle']
         # default_target = ['muggle', 'foot', 'knock', 'sky', 'rice', 'sea', 'pearl', 'guitar'] # medium case / test with coef 0.9
         # default_target = ['shiny', 'foot', 'knock', 'sky', 'rice', 'sea', 'pearl', 'guitar'] # happy case
         
@@ -19,15 +19,17 @@ if __name__ == "__main__":
         
         print('Selecting words for BERT')
         bert_model = BertModel()
-        model_result = bert_model.select_best_hint_from_embeddings_and_neighbors(target_words)
-        # model_result = bert_model.select_best_hint_from_embeddings(target_words)
-        print(f"Suggested Bert hint: {model_result["best_hint"]}  {model_result["best_score"]}\n")    
+        model_result_nn = bert_model.select_best_hint_from_embeddings_and_neighbors(target_words)
+        model_result_embedding = bert_model.select_best_hint_from_embeddings(target_words)
+        print(f"Suggested Bert NN hint: {model_result_nn["best_hint"]}  {model_result_nn["best_score"]}\n")  
+        print(f"Suggested Bert embedding hint: {model_result_embedding["best_hint"]}  {model_result_embedding["best_score"]}\n")    
         
-        # print('Selecting words for Glove')
-        # glove_model = GloveModel()
-        # # model_result = glove_model.select_best_hint_from_embeddings(target_words)
-        # model_result = glove_model.select_best_hint_from_embeddings_and_neighbors(target_words)
-        # print(f"Suggested Glove hint: {model_result["best_hint"]} {model_result["best_score"]}\n")   
+        print('Selecting words for Glove')
+        glove_model = GloveModel()
+        model_result_nn = glove_model.select_best_hint_from_embeddings_and_neighbors(target_words)
+        model_result_embedding = glove_model.select_best_hint_from_embeddings(target_words)
+        print(f"Suggested Glove NN hint: {model_result_nn["best_hint"]} {model_result_nn["best_score"]}\n")
+        print(f"Suggested Glove embedding hint: {model_result_embedding["best_hint"]} {model_result_embedding["best_score"]}\n")     
         
         # Generate results
         # default_target = board_cards["target"]
