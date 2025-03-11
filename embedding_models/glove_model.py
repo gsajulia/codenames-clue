@@ -81,7 +81,7 @@ class GloveModel:
         # Prepare the candidate words and vectors (avoiding excluded words)
         all_words = [
             word for word in self.embeddings.keys()
-            if word not in target_words and self.lemmatize_word(word) not in target_words and word not in stop_words
+            if not any(target in word or word in target for target in target_words) and self.lemmatize_word(word) not in target_words and word not in stop_words
         ]
         all_vectors = np.array([self.embeddings[word] for word in all_words])
         

@@ -56,7 +56,7 @@ def get_clue_candidates(target_words, target_embeddings, n_neighbors=3, threshol
                 # KNN can generate embeddings that are not present in target so we need to check
                 if neighbor in target_words: 
                     neighbor_embedding = target_embeddings[target_words.index(neighbor)]
-                    similarity = np_cosine_similarity([word_embedding], [neighbor_embedding])[0]
+                    similarity = np_cosine_similarity([word_embedding], [neighbor_embedding]).max()
                     similarity_candidates[neighbor] = similarity
                 else:
                     print(f"Warning: Word {neighbor} not found in target_words")
