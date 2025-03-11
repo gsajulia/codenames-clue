@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codenames Board</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background-color: #f8f9fa; 
+            padding: 20px;
+        }
+        .board-container { margin-top: 20px; }
+        .board { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 10px; 
+            max-width: 500px; 
+            margin: auto; 
+        }
+        .card { 
+            padding: 15px; 
+            background: #f0f8ff; 
+            border: 2px solid #ddd; 
+            cursor: pointer; 
+            transition: background 0.3s, transform 0.2s;
+            text-transform: capitalize;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .card:hover { 
+            background: #e9ecef; 
+            transform: scale(1.05);
+        }
+        .card.selected { 
+            background: #b3e6b7; 
+            color: white; 
+            border-color: #388E3C;
+        }
+        .incorrect {
+            background: #ffcccc; 
+            border-color: #e60000;
+        }
+        .correct {
+            background: #b3e6b7; 
+            border-color: #388E3C;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Codenames Board</h1>
+    <label for="boardSelector">Choose a board:</label>
+    <select id="boardSelector"></select>
+    <div class="board-container">
+        <div id="board" class="board"></div>
+    </div>
+    <button id="showResultsBtn">Show Results</button>
+    <script>
+        const WORD_SETS = [
+            ['ash', 'future'], ['water', 'salad'], ['planets', 'neptune'], ['hot', 'wheel'],
+            ['cannon', 'genius'], ['magazine', 'duel'], ['farm', 'potato'], ['small', 'rage'],
+            ['king', 'clown'], ['diamond', 'junk'], ['philippine', 'vegas'], ['cane', 'turn'],
+            ['frankenstein', 'application'], ['figure', 'post'], ['dress', 'cinderella'],
+            ['sun', 'solar'], ['ocean', 'sea'], ['mountain', 'peak'], ['computer', 'processor'],
+            ['artist', 'painting']
+        ];
+
+        function shuffleArray(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        const shuffledSets = shuffleArray(WORD_SETS);
+        const FIXED_WORDS = Object.fromEntries(shuffledSets.map((set, index) => [index + 1, set]));
+
+        const BOARD_COUNT = 20;
+        const boardSelector = document.getElementById("boardSelector");
+        const boardElement = document.getElementById("board");
+        const showResultsBtn = document.getElementById("showResultsBtn");
+        let selectedCards = [];
+        let showCorrectResults = true;
+
+        for (let i = 1; i <= BOARD_COUNT; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.textContent = `Board ${i}`;
+            boardSelector.appendChild(option);
+        }
+
+        async function fetchWords() {
+            const response = await fetch("../words.txt");
+            const text = await response.text();
+            return text.split("\n").map(word => word.trim()).filter(word => word);
+        }
+
+        async function generateBoard() {
+            const words = await fetchWords();
+            if (words.length < 23) {
+                alert("Not enough words in words.txt");
+                return;
+            }
+
+            const boardNumber = parseInt(boardSelector.value);
+            const shuffledWords = shuffleArray(words);
+            const selectedWords = shuffledWords.slice(0, 23).concat(FIXED_WORDS[boardNumber]);
+            selectedWords.sort(() => Math.random() - 0.5);
+
+            boardElement.innerHTML = "";
+            selectedCards = [];
+
+            selectedWords.forEach(word => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.textContent = word;
+                card.addEventListener("click", () => selectCard(card));
+                boardElement.appendChild(card);
+            });
+        }
+
+        function selectCard(card) {
+            if (card.classList.contains("selected")) {
+                card.classList.remove("selected");
+                selectedCards = selectedCards.filter(c => c !== card);
+            } else if (selectedCards.length < 2) {
+                card.classList.add("selected");
+                selectedCards.push(card);
+            }
+        }
+
+        showResultsBtn.addEventListener("click", () => {
+            showCorrectResults = !showCorrectResults;
+            const allCards = boardElement.querySelectorAll(".card");
+
+            allCards.forEach(card => {
+                if (showCorrectResults) {
+                    card.classList.remove("incorrect");
+                    card.classList.add("correct");
+                } else {
+                    card.classList.remove("correct");
+                    card.classList.add("incorrect");
+                }
+            });
+
+            showResultsBtn.textContent = showCorrectResults ? "Show Incorrect Results" : "Show Correct Results";
+        });
+
+        boardSelector.addEventListener("change", generateBoard);
+        generateBoard();
+    </script>
+</body>
+</html>
