@@ -75,12 +75,21 @@
           background-color: #91e3c7;
         }
       }
+
+      .hints {
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #4a4e69;
+      }
     </style>
   </head>
   <body>
     <h1>Codenames Board</h1>
     <label for="boardSelector">Choose a board:</label>
     <select id="boardSelector"></select>
+    <div class="hints" id="hints"></div>
+    <!-- Hints container -->
     <div class="board-container">
       <div id="board" class="board"></div>
     </div>
@@ -89,101 +98,22 @@
       <button id="saveResultsBtn">Save Results as CSV</button>
     </div>
 
-    <script>
-      const WORD_SETS = [
-        {
-          words: ["ash", "future"],
-          hints: ["Universe", "Immortality", "Possible", "Future"],
-        },
-        {
-          words: ["water", "salad"],
-          hints: ["Soup", "Pasta", "Lunch", "Veggies"],
-        },
-        {
-          words: ["planets", "neptune"],
-          hints: ["Jupiter", "Moons", "Solar System", "Planets"],
-        },
-        {
-          words: ["hot", "wheel"],
-          hints: ["Intense", "Brakes", "Speed", "Driving"],
-        },
-        {
-          words: ["cannon", "genius"],
-          hints: ["Furnace", "Kite", "Guns", "Battle"],
-        },
-        {
-          words: ["magazine", "duel"],
-          hints: ["Rival", "Editor", "Writer", "Battle"],
-        },
-        {
-          words: ["farm", "potato"],
-          hints: ["Butcher", "Agricultural", "Vegetable", "Harvest"],
-        },
-        {
-          words: ["small", "rage"],
-          hints: ["Frustration", "Emotion", "Anger", "Outburst"],
-        },
-        {
-          words: ["king", "clown"],
-          hints: ["Queen", "Crown", "Royalty", "Funny"],
-        },
-        {
-          words: ["diamond", "junk"],
-          hints: ["Gold", "Spaghetti", "Precious", "Treasure"],
-        },
-        {
-          words: ["philippine", "vegas"],
-          hints: ["Luzon", "Las Vegas", "Island", "Tourist"],
-        },
-        { words: ["cane", "turn"], hints: ["Drive", "Take", "Wheel", "Ride"] },
-        {
-          words: ["frankenstein", "application"],
-          hints: ["Superhero", "Dracula", "Monster", "Zombie"],
-        },
-        {
-          words: ["figure", "post"],
-          hints: ["Fortress", "Stump", "Office", "Structure"],
-        },
-        {
-          words: ["dress", "cinderella"],
-          hints: ["Doll", "Attire", "Fashion", "Fairy Tale"],
-        },
-        {
-          words: ["sun", "solar"],
-          hints: ["Dome", "Photovoltaic", "Energy", "Light"],
-        },
-        {
-          words: ["ocean", "sea"],
-          hints: ["Underwater", "Waters", "Aquatic", "Marine"],
-        },
-        {
-          words: ["mountain", "peak"],
-          hints: ["Volcano", "Slopes", "Climbing", "Nature"],
-        },
-        {
-          words: ["computer", "processor"],
-          hints: ["Laptop", "Software", "Technology", "Coding"],
-        },
-        {
-          words: ["artist", "painting"],
-          hints: ["Designer", "Sculpture", "Art", "Creativity"],
-        },
-      ];
-
-      function shuffleArray(array) {
-        return array.sort(() => Math.random() - 0.5);
-      }
-
-      const shuffledSets = shuffleArray(WORD_SETS);
+    <script type="module">
+      import { WORD_SETS, RANDOM_WORDS } from "./variables.js";
       const FIXED_WORDS = Object.fromEntries(
-        shuffledSets.map((set, index) => [index + 1, set.words])
+        WORD_SETS.map((set, index) => [
+          index + 1,
+          set.words.map((elem) => elem.toUpperCase()),
+        ])
       );
 
       const BOARD_COUNT = 20;
       const boardSelector = document.getElementById("boardSelector");
       const boardElement = document.getElementById("board");
       const showResultsBtn = document.getElementById("showResultsBtn");
+      const hintsElement = document.getElementById("hints"); // Hints container
       let boardStates = {};
+      let wordStatus = {};
 
       for (let i = 1; i <= BOARD_COUNT; i++) {
         let option = document.createElement("option");
@@ -205,15 +135,10 @@
         const boardNumber = parseInt(boardSelector.value);
 
         if (!boardStates[boardNumber]) {
-          const words = await fetchWords();
-          if (words.length < 23) {
-            alert("Not enough words in words.txt");
-            return;
-          }
+          const words = RANDOM_WORDS[boardNumber];
 
-          const shuffledWords = shuffleArray(words);
           const correctWords = FIXED_WORDS[boardNumber];
-          const selectedWords = shuffledWords.slice(0, 23).concat(correctWords);
+          const selectedWords = words.concat(correctWords);
           selectedWords.sort(() => Math.random() - 0.5);
 
           boardStates[boardNumber] = {
@@ -221,6 +146,10 @@
             gameEnded: false,
             words: selectedWords,
           };
+
+          selectedWords.forEach((word) => {
+            wordStatus[word] = false;
+          });
         }
 
         const { selectedCards, gameEnded, words } = boardStates[boardNumber];
@@ -248,6 +177,10 @@
           boardElement.appendChild(card);
         });
 
+        // Display corresponding hints
+        const hints = WORD_SETS[boardNumber - 1].hints;
+        hintsElement.textContent = `Hints: ${hints.join(", ")}`;
+
         boardElement.classList.toggle("disabled", gameEnded);
         showResultsBtn.disabled = gameEnded;
       }
@@ -263,6 +196,15 @@
         } else if (boardStates[boardNumber].selectedCards.length < 2) {
           card.classList.add("selected");
           boardStates[boardNumber].selectedCards.push(card.textContent);
+        }
+
+        // Check if the selected word is correct
+        if (
+          card.classList.contains("selected") &&
+          card.dataset.correct === "true" &&
+          !wordStatus[card.textContent]
+        ) {
+          wordStatus[card.textContent] = true; // Update the word status to true when selected correctly
         }
       }
 
@@ -283,22 +225,22 @@
         const boardNumber = parseInt(boardSelector.value);
         let csvContent = "Word,Is Correct\n";
 
-        document.querySelectorAll(".card").forEach((card) => {
-          const word = card.textContent;
-          const isCorrect =
-            boardStates[boardNumber].selectedCards.includes(word) &&
-            card.dataset.correct === "true"
-              ? "True"
-              : "False";
+        // Get all words (from FIXED_WORDS) and the correct ones for the current board
+        const correctWords = FIXED_WORDS[boardNumber];
+        const allWords = Object.values(FIXED_WORDS).flat(); // Get all words from all boards
 
+        // Create the CSV content for all words
+        allWords.forEach((word) => {
+          const isCorrect = wordStatus[word] ? "True" : "False";
           csvContent += `${word},${isCorrect}\n`;
         });
 
+        // Create a blob with the CSV content and trigger the download
         const blob = new Blob([csvContent], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `board_${boardNumber}_results.csv`;
+        link.download = `words_results.csv`; // This file will have the status for all words
         link.click();
         URL.revokeObjectURL(url);
       }
