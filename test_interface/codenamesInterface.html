@@ -93,7 +93,9 @@
     <div class="board-container">
       <div id="board" class="board"></div>
     </div>
-    <button id="showResultsBtn">Show Results</button>
+    <button id="showResultsBtn">Show Results</button><br /><br />
+    <input type="checkbox" id="usefulClue" name="usefulClue" value="useful" />
+    <label for="usefulClue"> Essa dica foi boa?</label><br />
     <div class="saveResults">
       <button id="saveResultsBtn">Save Results as CSV</button>
     </div>
@@ -104,6 +106,13 @@
         WORD_SETS.map((set, index) => [
           index + 1,
           set.words.map((elem) => elem.toUpperCase()),
+        ])
+      );
+
+      const WORDS_ATTRIBUTS = Object.fromEntries(
+        WORD_SETS.map((set, index) => [
+          index,
+          { model: set.model, usefulClue: false, clue: set.hint },
         ])
       );
 
@@ -178,8 +187,8 @@
         });
 
         // Display corresponding hints
-        const hints = WORD_SETS[boardNumber - 1].hints;
-        hintsElement.textContent = `Hints: ${hints.join(", ")}`;
+        const hint = WORD_SETS[boardNumber - 1].hint;
+        hintsElement.textContent = `Hints: ${hint}`;
 
         boardElement.classList.toggle("disabled", gameEnded);
         showResultsBtn.disabled = gameEnded;
@@ -222,17 +231,19 @@
       }
 
       function saveResultsToCSV() {
-        const boardNumber = parseInt(boardSelector.value);
-        let csvContent = "Word,Is Correct\n";
+        let csvContent = "Word,Is Correct,Model,Clue,Is good clue,Board\n";
 
-        // Get all words (from FIXED_WORDS) and the correct ones for the current board
-        const correctWords = FIXED_WORDS[boardNumber];
         const allWords = Object.values(FIXED_WORDS).flat(); // Get all words from all boards
 
         // Create the CSV content for all words
-        allWords.forEach((word) => {
+        allWords.forEach((word, i) => {
           const isCorrect = wordStatus[word] ? "True" : "False";
-          csvContent += `${word},${isCorrect}\n`;
+          const modelIndex = Math.floor(i / 2);
+          csvContent += `${word},${isCorrect},${
+            WORDS_ATTRIBUTS[modelIndex].model
+          },${WORDS_ATTRIBUTS[modelIndex].clue},${
+            WORDS_ATTRIBUTS[modelIndex].usefulClue
+          },${modelIndex + 1}\n`;
         });
 
         // Create a blob with the CSV content and trigger the download
@@ -252,6 +263,29 @@
             boardSelector.options[boardSelector.selectedIndex];
           selectedOption.style.backgroundColor = "#d3d3d3";
         });
+
+      document
+        .getElementById("usefulClue")
+        .addEventListener("change", (event) => {
+          const boardNumber = parseInt(boardSelector.value) - 1;
+          WORDS_ATTRIBUTS[boardNumber].usefulClue = event.target.checked;
+        });
+
+      boardSelector.addEventListener("change", () => {
+        const boardIndex = parseInt(boardSelector.value) - 1;
+        const checkbox = document.getElementById("usefulClue");
+
+        if (WORDS_ATTRIBUTS[boardIndex]) {
+          checkbox.checked = !!WORDS_ATTRIBUTS[boardIndex].usefulClue;
+        } else {
+          checkbox.checked = false;
+        }
+      });
+
+      boardSelector.addEventListener("change", () => {
+        const checkbox = document.getElementById("usefulClue");
+        checkbox.checked = false;
+      });
 
       showResultsBtn.addEventListener("click", showResults);
       boardSelector.addEventListener("change", generateBoard);
