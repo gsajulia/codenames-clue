@@ -231,19 +231,51 @@
       }
 
       function saveResultsToCSV() {
-        let csvContent = "Word,Is Correct,Model,Clue,Is good clue,Board\n";
+        let csvContent =
+          "clue,word_1,is_correct_1,word_2,is_correct_2,correct_pair,is_good_clue,model\n";
 
         const allWords = Object.values(FIXED_WORDS).flat(); // Get all words from all boards
 
-        // Create the CSV content for all words
+        // Create an object to group words by Clue
+        const clueGroups = {};
+
+        // Group the words by Clue and pair them up
         allWords.forEach((word, i) => {
-          const isCorrect = wordStatus[word] ? "True" : "False";
-          const modelIndex = Math.floor(i / 2);
-          csvContent += `${word},${isCorrect},${
-            WORDS_ATTRIBUTS[modelIndex].model
-          },${WORDS_ATTRIBUTS[modelIndex].clue},${
-            WORDS_ATTRIBUTS[modelIndex].usefulClue
-          },${modelIndex + 1}\n`;
+          const isCorrect = wordStatus[word] ? "True" : "False"; // Check if the word is correct
+          const modelIndex = Math.floor(i / 2); // Get the model index (assuming 2 words per pair)
+          const clue = WORDS_ATTRIBUTS[modelIndex].clue;
+          const isGoodClue = WORDS_ATTRIBUTS[modelIndex].usefulClue;
+
+          if (!clueGroups[clue]) {
+            clueGroups[clue] = [];
+          }
+
+          clueGroups[clue].push({
+            word,
+            isCorrect,
+            isGoodClue,
+            model: WORDS_ATTRIBUTS[modelIndex].model,
+          });
+        });
+
+        // Iterate through the clues and create the CSV rows
+        Object.keys(clueGroups).forEach((clue) => {
+          const pair = clueGroups[clue];
+
+          // Ensure we only have pairs (two words)
+          if (pair.length === 2) {
+            const word1 = pair[0].word;
+            const isCorrect1 = pair[0].isCorrect;
+            const word2 = pair[1].word;
+            const isCorrect2 = pair[1].isCorrect;
+            const correctPair =
+              isCorrect1 === "True" && isCorrect2 === "True" ? "True" : "False"; // Correct Pair
+            const isGoodClue = pair[0].isGoodClue ? "True" : "False"; // Assuming both words in the pair have the same clue validity
+            const model = pair[0].model; // Assuming both words in the pair are from the same model (adjust if needed)
+
+            // Add the row to the CSV content
+            csvContent += `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${correctPair},${isGoodClue},${model}\n`;
+          }
         });
 
         // Create a blob with the CSV content and trigger the download
@@ -251,7 +283,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `words_results.csv`; // This file will have the status for all words
+        link.download = `words_results.csv`; // This file will have the status for all word pairs
         link.click();
         URL.revokeObjectURL(url);
       }

@@ -68,9 +68,6 @@ class BatchResults:
           target_embeddings_glove = self.model_glove.get_word_embedding(target_words)
           clue_candidates_target_bert = get_clue_candidates(target_words, target_embeddings_bert)
           clue_candidates_target_glove = get_clue_candidates(target_words, target_embeddings_glove)
-          
-          if len(clue_candidates_target_bert) > 0:
-            target_words =clue_candidates_target_bert
 
           model_result_bert_embedding_nn = self.model_bert.select_best_hint_from_embeddings_and_neighbors(target_words)
           print(f"Suggested BERT NN hint: {model_result_bert_embedding_nn["best_hint"]}\n")
@@ -78,8 +75,6 @@ class BatchResults:
           model_result_bert_embedding = self.model_bert.select_best_hint_from_embeddings(target_words)
           print(f"Suggested BERT embedding hint: {model_result_bert_embedding["best_hint"]}\n")
           
-          if len(clue_candidates_target_glove) > 0:
-            target_words = clue_candidates_target_glove
           
           model_result_glove_embedding_nn  = self.model_glove.select_best_hint_from_embeddings_and_neighbors(target_words)
           print(f"Suggested Glove NN hint: {model_result_glove_embedding_nn["best_hint"]}\n")
