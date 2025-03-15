@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 def read_all_files_from_folder(folder_path, file_extension='.csv'):
     all_data = []
@@ -48,10 +49,12 @@ def plot_combined_metrics(all_dfs, output_folder):
     x = range(len(model_names))
     width = 0.2
 
+    colors = ['#8338ec', '#52b69a', '#3a86ff', '#fb6f92']
+    # Bar chart
     plt.figure(figsize=(15, 8))
     for i, metric in enumerate(metrics):
         metric_values = [sum(all_model_metrics[model][metric]) / len(all_model_metrics[model][metric]) for model in model_names]
-        plt.bar([pos + i * width for pos in x], metric_values, width=width, label=metric)
+        plt.bar([pos + i * width for pos in x], metric_values, width=width, label=metric, color=colors[i])
 
     plt.xticks([pos + 1.5 * width for pos in x], model_names)
     plt.ylabel('Percentage')
@@ -59,6 +62,39 @@ def plot_combined_metrics(all_dfs, output_folder):
     plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(output_folder, 'combined_model_metrics.png'))
+    plt.close()
+
+    # Scatter plot between Accuracy (avg of Accuracy 1 and Accuracy 2) and Good Clue Rate for each model
+    plt.figure(figsize=(15, 8))
+    
+    accuracy_values = []
+    good_clue_values = []
+    jitter_strength = 0.5
+    
+    for model in model_names:
+        accuracy_avg = (sum(all_model_metrics[model]['Accuracy 1']) / len(all_model_metrics[model]['Accuracy 1']) +
+                        sum(all_model_metrics[model]['Accuracy 2']) / len(all_model_metrics[model]['Accuracy 2'])) / 2
+        avg_good_clue_rate = sum(all_model_metrics[model]['Good Clue Rate']) / len(all_model_metrics[model]['Good Clue Rate'])
+        
+        accuracy_jitter = accuracy_avg + np.random.uniform(-jitter_strength, jitter_strength)
+        good_clue_jitter = avg_good_clue_rate + np.random.uniform(-jitter_strength, jitter_strength)
+
+        accuracy_values.append(accuracy_jitter)
+        good_clue_values.append(good_clue_jitter)
+
+        plt.scatter(accuracy_jitter, good_clue_jitter, s=100, label=model, color=colors[model_names.index(model) % len(colors)])
+
+
+    # Adjust scale for the graph
+    plt.xlim(min(accuracy_values) - 5, max(accuracy_values) + 5)  # Added small margin
+    plt.ylim(min(good_clue_values) - 5, max(good_clue_values) + 5)  # Added small margin
+    
+    plt.xlabel('Average Accuracy (%)')
+    plt.ylabel('Good Clue Rate (%)')
+    plt.title('Scatter Plot: Accuracy vs Good Clue Rate for All Models')
+    plt.legend(title="Models", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_folder, 'scatter_accuracy_vs_good_clue.png'))
     plt.close()
 
 input_folder = 'board_precision'
