@@ -10,6 +10,7 @@ class BatchResults:
     def __init__(self):
       self.total_results = 20
       self.results = []
+      #V4
       # self.easy_board_8_words = [
       #   ["sun", "solar", "sunshine", "energy", "heat", "light", "radiation", "environment"],
       #   ["ocean", "sea", "water", "wave", "tide", "coast", "marine", "salt"],
@@ -36,6 +37,8 @@ class BatchResults:
       #   ['dress', 'cinderella','swamp','fat', 'sword', 'sneak', 'comic', 'mushroom']
       # ]
       
+      
+      #V5
       # self.target_board_8_words = [
       #   ["MIRROR", "FURNACE", "PLASTIC", "JOURNAL", "CAVE", "BUTTON", "HOLE", "PLANET"],
       #   ["TORNADO", "COMPASS", "APPLE", "LADDER", "STONE", "BICYCLE", "FEATHER", "DUST"],
@@ -49,6 +52,7 @@ class BatchResults:
       #   ["PIXEL", "WAVE", "NEBULA", "CANDLE", "SERVER", "TORNADO", "POTION", "GUITAR"]
       # ]
       
+      #V6
       self.target_board_8_words = [
           ["BUTTON", "HOLE", "PLANET", "MIRROR", "FURNACE", "PLASTIC", "JOURNAL", "CAVE"],
           ["BICYCLE", "FEATHER", "DUST", "TORNADO", "COMPASS", "APPLE", "LADDER", "STONE"],
@@ -69,8 +73,8 @@ class BatchResults:
       self.model_glove = GloveModel()
       self.model_bert = BertModel()
       self.board = GenerateBoard()
-      self.target_board_2_words = [list(line)[:2] for line in self.target_board_8_words]
-      self.target_board_3_words = [list(line)[:3] for line in self.target_board_8_words]
+      # self.target_board_2_words = [list(line)[:2] for line in self.target_board_8_words]
+      # self.target_board_3_words = [list(line)[:3] for line in self.target_board_8_words]
 
     def save_results(self):
         """Save current results to a CSV file."""
@@ -82,7 +86,7 @@ class BatchResults:
         else:
             print("Empty results.")
       
-    def fixed_batch_results(self, target_board, board_name):
+    def fixed_batch_results(self, target_board, board_name, fixed_return=None):
       i = 0
       while i < len(target_board):
         try:
@@ -95,31 +99,31 @@ class BatchResults:
           
           target_embeddings_bert = self.model_bert.get_word_embedding(target_words).cpu().numpy()
           target_embeddings_glove = self.model_glove.get_word_embedding(target_words)
-          clue_candidates_target_bert = get_clue_candidates(target_words, target_embeddings_bert)
-          clue_candidates_target_glove = get_clue_candidates(target_words, target_embeddings_glove)
+          clue_candidates_target_bert = get_clue_candidates(target_words, target_embeddings_bert, 0.95,fixed_return)
+          clue_candidates_target_glove = get_clue_candidates(target_words, target_embeddings_glove, 0.95, fixed_return)
 
-          model_result_bert_embedding_nn = self.model_bert.select_best_hint_from_embeddings_and_neighbors(target_words)
+          model_result_bert_embedding_nn = self.model_bert.select_best_hint_from_embeddings_and_neighbors(clue_candidates_target_bert)
           print(f"Suggested BERT NN hint: {model_result_bert_embedding_nn["best_hint"]}\n")
           
-          model_result_bert_embedding = self.model_bert.select_best_hint_from_embeddings(target_words)
+          model_result_bert_embedding = self.model_bert.select_best_hint_from_embeddings(clue_candidates_target_bert)
           print(f"Suggested BERT embedding hint: {model_result_bert_embedding["best_hint"]}\n")
           
           
-          model_result_glove_embedding_nn  = self.model_glove.select_best_hint_from_embeddings_and_neighbors(target_words)
+          model_result_glove_embedding_nn  = self.model_glove.select_best_hint_from_embeddings_and_neighbors(clue_candidates_target_glove)
           print(f"Suggested Glove NN hint: {model_result_glove_embedding_nn["best_hint"]}\n")
           
-          model_result_glove_embedding = self.model_glove.select_best_hint_from_embeddings(target_words)
+          model_result_glove_embedding = self.model_glove.select_best_hint_from_embeddings(clue_candidates_target_glove)
           print(f"Suggested Glove embedding hint: {model_result_glove_embedding["best_hint"]}\n")
 
           self.results.append(
               {
                   "Cards target": target_words,
-                  # "Cards BERT": clue_candidates_target_bert,
+                  "Cards BERT": clue_candidates_target_bert,
                   "Expected word NN BERT": model_result_bert_embedding_nn["best_hint"],
                   "Similarity NN BERT":model_result_bert_embedding_nn["best_score"],
                   "Expected embedding word BERT": model_result_bert_embedding["best_hint"],
                   "Similarity embedding BERT":model_result_bert_embedding["best_score"],
-                  # "Cards Glove": clue_candidates_target_glove,
+                  "Cards Glove": clue_candidates_target_glove,
                   "Expected word NN GloVe": model_result_glove_embedding_nn["best_hint"],
                   "Similarity NN GloVe": model_result_glove_embedding_nn["best_score"],
                   "Expected word embedding GloVe": model_result_glove_embedding["best_hint"],
@@ -137,8 +141,11 @@ class BatchResults:
           
     def get_fixed_batch_results(self):
       # self.fixed_batch_results(self.target_board_8_words,"board_8")
-      self.fixed_batch_results(self.target_board_2_words,"board_2")
-      self.fixed_batch_results(self.target_board_3_words,"board_3")
+      # self.fixed_batch_results(self.target_board_2_words,"board_2")
+      # self.fixed_batch_results(self.target_board_3_words,"board_3")
+      
+      self.fixed_batch_results(self.target_board_8_words,"board_2", 2)
+      self.fixed_batch_results(self.target_board_8_words,"board_3", 3)
       
       self.save_results()
       

@@ -101,7 +101,8 @@
     </div>
 
     <script type="module">
-      import { WORD_SETS, RANDOM_WORDS } from "./variables.js";
+      // import { WORD_SETS, RANDOM_WORDS } from "./v6_game3_variables.js";
+      import { WORD_SETS, RANDOM_WORDS } from "./v5_game2_variables.js";
       const FIXED_WORDS = Object.fromEntries(
         WORD_SETS.map((set, index) => [
           index + 1,
@@ -116,7 +117,7 @@
         ])
       );
 
-      const tree_mode_enabled = true;
+      const tree_mode_enabled = WORD_SETS[0].words.length === 3 ? true : false;
 
       const BOARD_COUNT = 10;
       const boardSelector = document.getElementById("boardSelector");
