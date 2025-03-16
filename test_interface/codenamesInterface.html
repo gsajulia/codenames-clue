@@ -116,7 +116,9 @@
         ])
       );
 
-      const BOARD_COUNT = 20;
+      const tree_mode_enabled = true;
+
+      const BOARD_COUNT = 10;
       const boardSelector = document.getElementById("boardSelector");
       const boardElement = document.getElementById("board");
       const showResultsBtn = document.getElementById("showResultsBtn");
@@ -202,7 +204,10 @@
           boardStates[boardNumber].selectedCards = boardStates[
             boardNumber
           ].selectedCards.filter((c) => c !== card.textContent);
-        } else if (boardStates[boardNumber].selectedCards.length < 2) {
+        } else if (
+          boardStates[boardNumber].selectedCards.length <
+          (tree_mode_enabled ? 3 : 2)
+        ) {
           card.classList.add("selected");
           boardStates[boardNumber].selectedCards.push(card.textContent);
         }
@@ -231,8 +236,9 @@
       }
 
       function saveResultsToCSV() {
-        let csvContent =
-          "clue,word_1,is_correct_1,word_2,is_correct_2,correct_pair,is_good_clue,model\n";
+        let csvContent = tree_mode_enabled
+          ? "clue,word_1,is_correct_1,word_2,is_correct_2,word_3,is_correct_3,correct_pair,is_good_clue,model\n"
+          : "clue,word_1,is_correct_1,word_2,is_correct_2,correct_pair,is_good_clue,model\n";
 
         const allWords = Object.values(FIXED_WORDS).flat(); // Get all words from all boards
 
@@ -242,7 +248,7 @@
         // Group the words by Clue and pair them up
         allWords.forEach((word, i) => {
           const isCorrect = wordStatus[word] ? "True" : "False"; // Check if the word is correct
-          const modelIndex = Math.floor(i / 2); // Get the model index (assuming 2 words per pair)
+          const modelIndex = Math.floor(i / (tree_mode_enabled ? 3 : 2)); // Get the model index (assuming 2 words per pair)
           const clue = WORDS_ATTRIBUTS[modelIndex].clue;
           const isGoodClue = WORDS_ATTRIBUTS[modelIndex].usefulClue;
 
@@ -263,18 +269,25 @@
           const pair = clueGroups[clue];
 
           // Ensure we only have pairs (two words)
-          if (pair.length === 2) {
+          if (pair.length === tree_mode_enabled ? 3 : 2) {
             const word1 = pair[0].word;
             const isCorrect1 = pair[0].isCorrect;
             const word2 = pair[1].word;
             const isCorrect2 = pair[1].isCorrect;
+            let word3, isCorrect3;
+            if (tree_mode_enabled) {
+              word3 = pair[2].word;
+              isCorrect3 = pair[2].isCorrect;
+            }
             const correctPair =
               isCorrect1 === "True" && isCorrect2 === "True" ? "True" : "False"; // Correct Pair
             const isGoodClue = pair[0].isGoodClue ? "True" : "False"; // Assuming both words in the pair have the same clue validity
             const model = pair[0].model; // Assuming both words in the pair are from the same model (adjust if needed)
 
             // Add the row to the CSV content
-            csvContent += `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${correctPair},${isGoodClue},${model}\n`;
+            csvContent += tree_mode_enabled
+              ? `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${word3},${isCorrect3},${correctPair},${isGoodClue},${model}\n`
+              : `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${correctPair},${isGoodClue},${model}\n`;
           }
         });
 

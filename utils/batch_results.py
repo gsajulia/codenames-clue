@@ -10,33 +10,62 @@ class BatchResults:
     def __init__(self):
       self.total_results = 20
       self.results = []
-      self.easy_board_8_words = [
-        ["sun", "solar", "sunshine", "energy", "heat", "light", "radiation", "environment"],
-        ["ocean", "sea", "water", "wave", "tide", "coast", "marine", "salt"],
-        ["mountain", "peak", "summit", "climb", "adventure", "altitude", "hike", "trail"],
-        ["computer", "processor", "ram", "technology", "software", "system", "data", "network"],
-        ["artist", "painting", "brush", "canvas", "gallery", "sculpture", "exhibition", "creativity"]
-      ]
-      # batch 20
-      self.target_board_8_words = [
-        ['ash', 'future', 'wall', 'wanted', 'fishing', 'hotel', 'seal', 'boy'],
-        ['water', 'salad', 'note', 'link', 'group', 'mole', 'soccer', 'columbus'],
-        ['planets', 'neptune', 'blind', 'root', 'africa', 'life', 'nebula', 'beverage'],
-        ['hot', 'wheel', 'kitchen', 'bolt', 'share', 'internet', 'monkey', 'pyramid'],
-        ['cannon', 'genius', 'balance', 'baseball', 'port', 'toronto', 'spider', 'jinx'],
-        ['magazine', 'duel', 'tuna', 'steel', 'brace', 'comb', 'astronomy', 'spring'],
-        ['farm', 'potato', 'ace', 'resume', 'volume', 'plot', 'track', 'card'],
-        ['small', 'rage', 'cloak', 'alaska', 'taboo', 'turkey', 'saturn', 'basketball'],
-        ['king', 'clown', 'frozen', 'leak', 'fiddle', 'range', 'candle', 'potion'],
-        ['diamond', 'junk', 'drain', 'brazil', 'wet', 'bench', 'chief', 'wax'],
-        ['philippine', 'vegas', 'treat', 'witch', 'magician', 'mile', 'chance', 'agent'],
-        ['cane', 'turn', 'alliance', 'statue', 'date', 'carrot', 'lancelot', 'margin'],
-        ['frankenstein', 'application', 'antarctica', 'pendant', 'kick', 'union', 'jeweler', 'disney'],
-        ['figure', 'post', 'score', 'shack', 'point', 'cook', 'wine', 'viking'],
-        ['dress', 'cinderella','swamp','fat', 'sword', 'sneak', 'comic', 'mushroom']
-      ]
+      # self.easy_board_8_words = [
+      #   ["sun", "solar", "sunshine", "energy", "heat", "light", "radiation", "environment"],
+      #   ["ocean", "sea", "water", "wave", "tide", "coast", "marine", "salt"],
+      #   ["mountain", "peak", "summit", "climb", "adventure", "altitude", "hike", "trail"],
+      #   ["computer", "processor", "ram", "technology", "software", "system", "data", "network"],
+      #   ["artist", "painting", "brush", "canvas", "gallery", "sculpture", "exhibition", "creativity"]
+      # ]
+      # # batch 20
+      # self.target_board_8_words = [
+      #   ['ash', 'future', 'wall', 'wanted', 'fishing', 'hotel', 'seal', 'boy'],
+      #   ['water', 'salad', 'note', 'link', 'group', 'mole', 'soccer', 'columbus'],
+      #   ['planets', 'neptune', 'blind', 'root', 'africa', 'life', 'nebula', 'beverage'],
+      #   ['hot', 'wheel', 'kitchen', 'bolt', 'share', 'internet', 'monkey', 'pyramid'],
+      #   ['cannon', 'genius', 'balance', 'baseball', 'port', 'toronto', 'spider', 'jinx'],
+      #   ['magazine', 'duel', 'tuna', 'steel', 'brace', 'comb', 'astronomy', 'spring'],
+      #   ['farm', 'potato', 'ace', 'resume', 'volume', 'plot', 'track', 'card'],
+      #   ['small', 'rage', 'cloak', 'alaska', 'taboo', 'turkey', 'saturn', 'basketball'],
+      #   ['king', 'clown', 'frozen', 'leak', 'fiddle', 'range', 'candle', 'potion'],
+      #   ['diamond', 'junk', 'drain', 'brazil', 'wet', 'bench', 'chief', 'wax'],
+      #   ['philippine', 'vegas', 'treat', 'witch', 'magician', 'mile', 'chance', 'agent'],
+      #   ['cane', 'turn', 'alliance', 'statue', 'date', 'carrot', 'lancelot', 'margin'],
+      #   ['frankenstein', 'application', 'antarctica', 'pendant', 'kick', 'union', 'jeweler', 'disney'],
+      #   ['figure', 'post', 'score', 'shack', 'point', 'cook', 'wine', 'viking'],
+      #   ['dress', 'cinderella','swamp','fat', 'sword', 'sneak', 'comic', 'mushroom']
+      # ]
       
-      self.target_board_8_words.extend(self.easy_board_8_words)
+      # self.target_board_8_words = [
+      #   ["MIRROR", "FURNACE", "PLASTIC", "JOURNAL", "CAVE", "BUTTON", "HOLE", "PLANET"],
+      #   ["TORNADO", "COMPASS", "APPLE", "LADDER", "STONE", "BICYCLE", "FEATHER", "DUST"],
+      #   ["PRINCE", "CROSSBOW", "VIOLET", "SCREEN", "BATTERY", "WIRE", "SATELLITE", "BOTTLE"],
+      #   ["ANDROID", "CLOCK", "FOX", "PIRATE", "GUITAR", "FIRE", "MOUSE", "SILK"],
+      #   ["DRAGON", "MOON", "TIGER", "CASTLE", "MOAT", "GHOST", "CANDLE", "LADDER"],
+      #   ["BUBBLE", "TSUNAMI", "RAIN", "BUTTON", "PRINCE", "OYSTER", "FOSSIL", "TORCH"],
+      #   ["MOUNTAIN", "FROG", "JOURNAL", "POTION", "FROG", "SPIDER", "VALLEY", "EAGLE"],
+      #   ["SPIDER", "SHARK", "BUG", "PIRATE", "CASTLE", "CAVE", "SUN", "PLASTIC"],
+      #   ["ASTEROID", "EARTH", "SPACESHIP", "FEATHER", "RIVER", "LAGOON", "OYSTER", "DUNGEON"],
+      #   ["PIXEL", "WAVE", "NEBULA", "CANDLE", "SERVER", "TORNADO", "POTION", "GUITAR"]
+      # ]
+      
+      self.target_board_8_words = [
+          ["BUTTON", "HOLE", "PLANET", "MIRROR", "FURNACE", "PLASTIC", "JOURNAL", "CAVE"],
+          ["BICYCLE", "FEATHER", "DUST", "TORNADO", "COMPASS", "APPLE", "LADDER", "STONE"],
+          ["WIRE", "SATELLITE", "BOTTLE", "PRINCE", "CROSSBOW", "VIOLET", "SCREEN", "BATTERY"],
+          ["MOUSE", "SILK", "ANDROID", "CLOCK", "FOX", "PIRATE", "GUITAR", "FIRE"],
+          ["GHOST", "CANDLE", "LADDER", "DRAGON", "MOON", "TIGER", "CASTLE", "MOAT"],
+          ["OYSTER", "FOSSIL", "TORCH", "BUBBLE", "TSUNAMI", "RAIN", "BUTTON", "PRINCE"],
+          ["SPIDER", "VALLEY", "EAGLE", "MOUNTAIN", "FROG", "JOURNAL", "POTION", "FROG"],
+          ["CASTLE", "CAVE", "SUN", "PLASTIC", "SPIDER", "SHARK", "BUG", "PIRATE"],
+          ["LAGOON", "OYSTER", "DUNGEON", "ASTEROID", "EARTH", "SPACESHIP", "FEATHER", "RIVER"],
+          ["SERVER", "TORNADO", "POTION", "GUITAR", "PIXEL", "WAVE", "NEBULA", "CANDLE"]
+      ]
+            
+      # Convert all words to lowercase
+      self.target_board_8_words = [[word.lower() for word in row] for row in self.target_board_8_words]
+                  
+      # self.target_board_8_words.extend(self.easy_board_8_words)
       self.model_glove = GloveModel()
       self.model_bert = BertModel()
       self.board = GenerateBoard()
@@ -85,12 +114,12 @@ class BatchResults:
           self.results.append(
               {
                   "Cards target": target_words,
-                  "Cards BERT": clue_candidates_target_bert,
+                  # "Cards BERT": clue_candidates_target_bert,
                   "Expected word NN BERT": model_result_bert_embedding_nn["best_hint"],
                   "Similarity NN BERT":model_result_bert_embedding_nn["best_score"],
                   "Expected embedding word BERT": model_result_bert_embedding["best_hint"],
                   "Similarity embedding BERT":model_result_bert_embedding["best_score"],
-                  "Cards Glove": clue_candidates_target_glove,
+                  # "Cards Glove": clue_candidates_target_glove,
                   "Expected word NN GloVe": model_result_glove_embedding_nn["best_hint"],
                   "Similarity NN GloVe": model_result_glove_embedding_nn["best_score"],
                   "Expected word embedding GloVe": model_result_glove_embedding["best_hint"],
@@ -107,7 +136,7 @@ class BatchResults:
             return
           
     def get_fixed_batch_results(self):
-      self.fixed_batch_results(self.target_board_8_words,"board_8")
+      # self.fixed_batch_results(self.target_board_8_words,"board_8")
       self.fixed_batch_results(self.target_board_2_words,"board_2")
       self.fixed_batch_results(self.target_board_3_words,"board_3")
       
