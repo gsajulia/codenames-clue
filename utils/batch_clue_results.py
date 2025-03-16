@@ -46,7 +46,7 @@ class BatchResults:
       #   ["ANDROID", "CLOCK", "FOX", "PIRATE", "GUITAR", "FIRE", "MOUSE", "SILK"],
       #   ["DRAGON", "MOON", "TIGER", "CASTLE", "MOAT", "GHOST", "CANDLE", "LADDER"],
       #   ["BUBBLE", "TSUNAMI", "RAIN", "BUTTON", "PRINCE", "OYSTER", "FOSSIL", "TORCH"],
-      #   ["MOUNTAIN", "FROG", "JOURNAL", "POTION", "FROG", "SPIDER", "VALLEY", "EAGLE"],
+      #   ["MOUNTAIN", "FROG", "JOURNAL", "POTION", "DUCK", "SPIDER", "VALLEY", "EAGLE"],
       #   ["SPIDER", "SHARK", "BUG", "PIRATE", "CASTLE", "CAVE", "SUN", "PLASTIC"],
       #   ["ASTEROID", "EARTH", "SPACESHIP", "FEATHER", "RIVER", "LAGOON", "OYSTER", "DUNGEON"],
       #   ["PIXEL", "WAVE", "NEBULA", "CANDLE", "SERVER", "TORNADO", "POTION", "GUITAR"]
@@ -60,7 +60,7 @@ class BatchResults:
           ["MOUSE", "SILK", "ANDROID", "CLOCK", "FOX", "PIRATE", "GUITAR", "FIRE"],
           ["GHOST", "CANDLE", "LADDER", "DRAGON", "MOON", "TIGER", "CASTLE", "MOAT"],
           ["OYSTER", "FOSSIL", "TORCH", "BUBBLE", "TSUNAMI", "RAIN", "BUTTON", "PRINCE"],
-          ["SPIDER", "VALLEY", "EAGLE", "MOUNTAIN", "FROG", "JOURNAL", "POTION", "FROG"],
+          ["SPIDER", "VALLEY", "EAGLE", "MOUNTAIN", "DUCK", "JOURNAL", "POTION", "FROG",],
           ["CASTLE", "CAVE", "SUN", "PLASTIC", "SPIDER", "SHARK", "BUG", "PIRATE"],
           ["LAGOON", "OYSTER", "DUNGEON", "ASTEROID", "EARTH", "SPACESHIP", "FEATHER", "RIVER"],
           ["SERVER", "TORNADO", "POTION", "GUITAR", "PIXEL", "WAVE", "NEBULA", "CANDLE"]
@@ -97,15 +97,15 @@ class BatchResults:
           
           target_words = default_target
           
-          target_embeddings_bert = self.model_bert.get_word_embedding(target_words).cpu().numpy()
+          # target_embeddings_bert = self.model_bert.get_word_embedding(target_words).cpu().numpy()
           target_embeddings_glove = self.model_glove.get_word_embedding(target_words)
-          clue_candidates_target_bert = get_clue_candidates(target_words, target_embeddings_bert, 0.95,fixed_return)
-          clue_candidates_target_glove = get_clue_candidates(target_words, target_embeddings_glove, 0.95, fixed_return)
+          # clue_candidates_target_bert = get_clue_candidates(target_words, target_embeddings_bert, fixed_return, fixed_return)
+          clue_candidates_target_glove = get_clue_candidates(target_words, target_embeddings_glove, fixed_return, fixed_return)
 
-          model_result_bert_embedding_nn = self.model_bert.select_best_hint_from_embeddings_and_neighbors(clue_candidates_target_bert)
+          model_result_bert_embedding_nn = self.model_bert.select_best_hint_from_embeddings_and_neighbors(clue_candidates_target_glove)
           print(f"Suggested BERT NN hint: {model_result_bert_embedding_nn["best_hint"]}\n")
           
-          model_result_bert_embedding = self.model_bert.select_best_hint_from_embeddings(clue_candidates_target_bert)
+          model_result_bert_embedding = self.model_bert.select_best_hint_from_embeddings(clue_candidates_target_glove)
           print(f"Suggested BERT embedding hint: {model_result_bert_embedding["best_hint"]}\n")
           
           
@@ -118,12 +118,11 @@ class BatchResults:
           self.results.append(
               {
                   "Cards target": target_words,
-                  "Cards BERT": clue_candidates_target_bert,
+                  "Cards filtered by Glove Similarity": clue_candidates_target_glove,
                   "Expected word NN BERT": model_result_bert_embedding_nn["best_hint"],
                   "Similarity NN BERT":model_result_bert_embedding_nn["best_score"],
                   "Expected embedding word BERT": model_result_bert_embedding["best_hint"],
                   "Similarity embedding BERT":model_result_bert_embedding["best_score"],
-                  "Cards Glove": clue_candidates_target_glove,
                   "Expected word NN GloVe": model_result_glove_embedding_nn["best_hint"],
                   "Similarity NN GloVe": model_result_glove_embedding_nn["best_score"],
                   "Expected word embedding GloVe": model_result_glove_embedding["best_hint"],

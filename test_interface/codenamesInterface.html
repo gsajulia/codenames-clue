@@ -96,13 +96,39 @@
     <button id="showResultsBtn">Show Results</button><br /><br />
     <input type="checkbox" id="usefulClue" name="usefulClue" value="useful" />
     <label for="usefulClue"> Essa dica foi boa?</label><br />
+    <br />
+    <br />
+    <input
+      type="checkbox"
+      id="usefulBatchWords"
+      name="useusefulBatchWordsfulClue"
+      value="usefulBatchWords"
+    />
+    <label for="usefulBatchWords"
+      >Na sua opinião, as palavras em verde tem relação?</label
+    ><br />
     <div class="saveResults">
       <button id="saveResultsBtn">Save Results as CSV</button>
     </div>
 
     <script type="module">
+      //3 words
       // import { WORD_SETS, RANDOM_WORDS } from "./v6_game3_variables.js";
-      import { WORD_SETS, RANDOM_WORDS } from "./v5_game2_variables.js";
+
+      //3 words with algorithm
+      import {
+        WORD_SETS,
+        RANDOM_WORDS,
+      } from "./v6_with_algorithm_game5_variables.js";
+
+      // 2 words
+      // import { WORD_SETS, RANDOM_WORDS } from "./v5_game2_variables.js";
+
+      // 2 words with algorithm
+      //import {
+      //   WORD_SETS,
+      //   RANDOM_WORDS,
+      // } from "./v5_with_algorithm_game4_variables.js";
       const FIXED_WORDS = Object.fromEntries(
         WORD_SETS.map((set, index) => [
           index + 1,
@@ -113,7 +139,12 @@
       const WORDS_ATTRIBUTS = Object.fromEntries(
         WORD_SETS.map((set, index) => [
           index,
-          { model: set.model, usefulClue: false, clue: set.hint },
+          {
+            model: set.model,
+            usefulClue: false,
+            clue: set.hint,
+            usefulBatchWords: false,
+          },
         ])
       );
 
@@ -238,8 +269,8 @@
 
       function saveResultsToCSV() {
         let csvContent = tree_mode_enabled
-          ? "clue,word_1,is_correct_1,word_2,is_correct_2,word_3,is_correct_3,correct_pair,is_good_clue,model\n"
-          : "clue,word_1,is_correct_1,word_2,is_correct_2,correct_pair,is_good_clue,model\n";
+          ? "clue,word_1,is_correct_1,word_2,is_correct_2,word_3,is_correct_3,correct_pair,is_good_clue,is_good_words_batch,model\n"
+          : "clue,word_1,is_correct_1,word_2,is_correct_2,correct_pair,is_good_clue,is_good_words_batch,model\n";
 
         const allWords = Object.values(FIXED_WORDS).flat(); // Get all words from all boards
 
@@ -252,6 +283,7 @@
           const modelIndex = Math.floor(i / (tree_mode_enabled ? 3 : 2)); // Get the model index (assuming 2 words per pair)
           const clue = WORDS_ATTRIBUTS[modelIndex].clue;
           const isGoodClue = WORDS_ATTRIBUTS[modelIndex].usefulClue;
+          const isGoodBatchWords = WORDS_ATTRIBUTS[modelIndex].usefulBatchWords;
 
           if (!clueGroups[clue]) {
             clueGroups[clue] = [];
@@ -261,6 +293,7 @@
             word,
             isCorrect,
             isGoodClue,
+            isGoodBatchWords,
             model: WORDS_ATTRIBUTS[modelIndex].model,
           });
         });
@@ -283,12 +316,15 @@
             const correctPair =
               isCorrect1 === "True" && isCorrect2 === "True" ? "True" : "False"; // Correct Pair
             const isGoodClue = pair[0].isGoodClue ? "True" : "False"; // Assuming both words in the pair have the same clue validity
+            const isGoodBatchWords = pair[0].isGoodBatchWords
+              ? "True"
+              : "False";
             const model = pair[0].model; // Assuming both words in the pair are from the same model (adjust if needed)
 
             // Add the row to the CSV content
             csvContent += tree_mode_enabled
-              ? `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${word3},${isCorrect3},${correctPair},${isGoodClue},${model}\n`
-              : `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${correctPair},${isGoodClue},${model}\n`;
+              ? `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${word3},${isCorrect3},${correctPair},${isGoodClue},${isGoodBatchWords},${model}\n`
+              : `${clue},${word1},${isCorrect1},${word2},${isCorrect2},${correctPair},${isGoodClue},${isGoodBatchWords},${model}\n`;
           }
         });
 
@@ -317,19 +353,31 @@
           WORDS_ATTRIBUTS[boardNumber].usefulClue = event.target.checked;
         });
 
+      document
+        .getElementById("usefulBatchWords")
+        .addEventListener("change", (event) => {
+          const boardNumber = parseInt(boardSelector.value) - 1;
+          WORDS_ATTRIBUTS[boardNumber].usefulBatchWords = event.target.checked;
+        });
+
       boardSelector.addEventListener("change", () => {
         const boardIndex = parseInt(boardSelector.value) - 1;
         const checkbox = document.getElementById("usefulClue");
+        const checkboxBatch = document.getElementById("usefulBatchWords");
 
         if (WORDS_ATTRIBUTS[boardIndex]) {
           checkbox.checked = !!WORDS_ATTRIBUTS[boardIndex].usefulClue;
+          checkboxBatch.checked = !!WORDS_ATTRIBUTS[boardIndex].checkboxBatch;
         } else {
           checkbox.checked = false;
+          checkboxBatch.checked = false;
         }
       });
 
       boardSelector.addEventListener("change", () => {
         const checkbox = document.getElementById("usefulClue");
+        const checkboxBatch = document.getElementById("usefulBatchWords");
+        checkboxBatch.checked = false;
         checkbox.checked = false;
       });
 

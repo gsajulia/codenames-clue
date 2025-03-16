@@ -1,7 +1,7 @@
 from utils.functions import  np_cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 
-def get_clue_candidates(target_words, target_embeddings, n_neighbors=2, threshold_coef=0.95, fixed_return=None):
+def get_clue_candidates(target_words, target_embeddings, fixed_return=None, n_neighbors=2, threshold_coef=0.95):
     """
     Finds the best clue candidates for the blue team in Codenames.
     

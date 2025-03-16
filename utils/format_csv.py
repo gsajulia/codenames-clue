@@ -24,4 +24,4 @@ def is_float(value):
         return False
 
 
-convert_floats_to_strings("v6_for_3_game.csv", "v6_for_3_game_formated.csv")
+convert_floats_to_strings("V5_V6_with_algoritm_results_simple.csv", "V5_V6_with_algoritm_results_simple_formated.csv")
