@@ -82,50 +82,65 @@
         font-weight: bold;
         color: #4a4e69;
       }
+      .mainContent {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
-    <h1>Codenames Board</h1>
-    <label for="boardSelector">Choose a board:</label>
-    <select id="boardSelector"></select>
-    <div class="hints" id="hints"></div>
-    <!-- Hints container -->
-    <div class="board-container">
-      <div id="board" class="board"></div>
-    </div>
-    <button id="showResultsBtn">Show Results</button><br /><br />
-    <input type="checkbox" id="usefulClue" name="usefulClue" value="useful" />
-    <label for="usefulClue"> Essa dica foi boa?</label><br />
-    <br />
-    <br />
-    <input
-      type="checkbox"
-      id="usefulBatchWords"
-      name="useusefulBatchWordsfulClue"
-      value="usefulBatchWords"
-    />
-    <label for="usefulBatchWords"
-      >Na sua opinião, as palavras em verde tem relação?</label
-    ><br />
-    <div class="saveResults">
-      <button id="saveResultsBtn">Save Results as CSV</button>
+      <h1>Codenames Board</h1>
+      <div>
+        <label for="boardSelector">Choose a board:</label>
+        <select id="boardSelector"></select>
+      </div>
+    <div class="mainContent">
+        <div class="hints" id="hints"></div>
+        <div class="board-container">
+          <div id="board" class="board"></div>
+        </div>
+        <div><button id="showResultsBtn">Show Results</button><br /><br /></div>
+      </div>
+      <br />
+
+      <div>
+        <input
+          type="checkbox"
+          id="usefulClue"
+          name="usefulClue"
+          value="useful"
+        />
+        <label for="usefulClue"> Was this clue helpful?</label>
+      </div>
+      <br />
+
+      <br />
+      <div>
+        <input
+          type="checkbox"
+          id="usefulBatchWords"
+          name="useusefulBatchWordsfulClue"
+          value="usefulBatchWords"
+        />
+        <label for="usefulBatchWords"
+          >In your opinion, do the green words relate to each other?</label
+        ><br />
+      </div>
+      <div class="saveResults">
+        <button id="saveResultsBtn">Save Results as CSV</button>
+      </div>
     </div>
 
     <script type="module">
-      //3 words
-      // import { WORD_SETS, RANDOM_WORDS } from "./v6_game3_variables.js";
-
       //3 words with algorithm
       import {
         WORD_SETS,
         RANDOM_WORDS,
       } from "./v6_with_algorithm_game5_variables.js";
 
-      // 2 words
-      // import { WORD_SETS, RANDOM_WORDS } from "./v5_game2_variables.js";
-
       // 2 words with algorithm
-      //import {
+      // import {
       //   WORD_SETS,
       //   RANDOM_WORDS,
       // } from "./v5_with_algorithm_game4_variables.js";
@@ -222,7 +237,7 @@
 
         // Display corresponding hints
         const hint = WORD_SETS[boardNumber - 1].hint;
-        hintsElement.textContent = `Hints: ${hint}`;
+        hintsElement.textContent = `Hint: ${hint}`;
 
         boardElement.classList.toggle("disabled", gameEnded);
         showResultsBtn.disabled = gameEnded;
@@ -259,7 +274,16 @@
         boardStates[boardNumber].gameEnded = true;
 
         document.querySelectorAll(".card").forEach((card) => {
+          if (
+            card.classList.contains("selected") &&
+            card.dataset.correct === "true"
+          ) {
+            wordStatus[card.textContent] = true;
+          } else {
+            wordStatus[card.textContent] = false;
+          }
           card.classList.remove("selected");
+
           card.classList.add(card.dataset.correct === "true" && "correct");
         });
 

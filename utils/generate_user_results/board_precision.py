@@ -128,6 +128,34 @@ def plot_combined_metrics(all_dfs, output_folder):
     plt.tight_layout()
     plt.savefig(os.path.join(output_folder, 'scatter_accuracy_vs_good_clue.png'))
     plt.close()
+    
+    # Individual chart for each gameplay
+    # background_color_empty = '#edede9'
+    # colors = ['#e9c46a', '#2a9d8f', '#e76f51', '#22577a', '#f1c40f']
+    
+    # # Horizontal bar chart
+    # plt.figure(figsize=(10, 12))
+    # bar_height = 0.15
+    # y = np.arange(len(model_names))
+
+    # for i, metric in enumerate(metrics):
+    #     metric_values = []
+    #     for model in model_names:
+    #         if len(all_model_metrics[model][metric]) > 0:
+    #             metric_values.append(sum(all_model_metrics[model][metric]) / len(all_model_metrics[model][metric]))
+    #         else:
+    #             metric_values.append(0)
+
+    #     plt.barh([pos + i * bar_height for pos in y], [100] * len(y), height=bar_height, color=background_color_empty, zorder=1)
+    #     plt.barh([pos + i * bar_height for pos in y], metric_values, height=bar_height, label=metric, color=colors[i])
+
+    # plt.yticks([pos + (len(metrics) / 2 - 0.5) * bar_height for pos in y], model_names)
+    # plt.xlabel('Percentage')
+    # plt.title('Player 1 metrics')
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.savefig(os.path.join(output_folder, 'combined_model_metrics_horizontal.png'))
+    # plt.close()
 
 input_folder = 'board_precision'
 output_folder = 'graphs'
